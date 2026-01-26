@@ -183,11 +183,11 @@ function hideTemplateMenu() {
 function renderTemplateList() {
     const container = document.getElementById('templateList');
     container.innerHTML = templates.map(name => `
-        <div class="template-item ${name === currentTemplate ? 'active' : ''}" onclick="switchTemplate('${escapeHtml(name)}')">
+        <div class="template-item ${name === currentTemplate ? 'active' : ''}" onclick="switchTemplate('${escapeJsString(name)}')">
             <span class="template-item-name">${escapeHtml(name)}</span>
             <div class="template-item-actions">
-                <button class="template-action-btn" onclick="event.stopPropagation(); renameTemplate('${escapeHtml(name)}')" title="Rename">✎</button>
-                <button class="template-action-btn" onclick="event.stopPropagation(); deleteTemplate('${escapeHtml(name)}')" title="Delete">×</button>
+                <button class="template-action-btn" onclick="event.stopPropagation(); renameTemplate('${escapeJsString(name)}')" title="Rename">✎</button>
+                <button class="template-action-btn" onclick="event.stopPropagation(); deleteTemplate('${escapeJsString(name)}')" title="Delete">×</button>
             </div>
         </div>
     `).join('');
@@ -361,11 +361,22 @@ function deleteTask(id) {
     renderTasks();
 }
 
-// Escape HTML
+// Escape HTML for text content
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Escape string for JavaScript string literals (single-quoted)
+// Used in onclick handlers to prevent XSS
+function escapeJsString(str) {
+    return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r');
 }
 
 // Find parent task for a sub-task (handles midnight crossing)
