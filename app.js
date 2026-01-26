@@ -1,5 +1,6 @@
 // State
-let currentDate = new Date();
+let currentTemplate = '';
+let templates = [];
 let selectedColor = 'coral';
 let editingTaskId = null;
 
@@ -12,32 +13,35 @@ const colors = {
     slate: '#7c8594'
 };
 
-// Get date key for storage
-function getDateKey(date) {
-    return date.toISOString().split('T')[0];
-}
-
-// Load data from localStorage
-function loadData() {
-    const key = getDateKey(currentDate);
-    const data = localStorage.getItem('timeplanner_' + key);
+// Load templates list
+function loadTemplates() {
+    const data = localStorage.getItem('timetable_templates');
     return data ? JSON.parse(data) : [];
 }
 
-// Save data to localStorage
+// Save templates list
+function saveTemplates() {
+    localStorage.setItem('timetable_templates', JSON.stringify(templates));
+}
+
+// Get storage key for template
+function getTemplateKey(name) {
+    return 'timetable_' + name.toLowerCase().replace(/\s+/g, '_');
+}
+
+// Load tasks for current template
+function loadData() {
+    if (!currentTemplate) return [];
+    const key = getTemplateKey(currentTemplate);
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : [];
+}
+
+// Save tasks for current template
 function saveData(data) {
-    const key = getDateKey(currentDate);
-    localStorage.setItem('timeplanner_' + key, JSON.stringify(data));
-}
-
-// Format weekday
-function formatWeekday(date) {
-    return date.toLocaleDateString('en-US', { weekday: 'long' });
-}
-
-// Format full date
-function formatFullDate(date) {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (!currentTemplate) return;
+    const key = getTemplateKey(currentTemplate);
+    localStorage.setItem(key, JSON.stringify(data));
 }
 
 // Format time for display
@@ -131,17 +135,113 @@ function updateHoursLeft() {
     }
 }
 
-// Change date
-function changeDate(delta) {
-    currentDate.setDate(currentDate.getDate() + delta);
-    updateDateDisplay();
-    renderTasks();
+// Template navigation
+function prevTemplate() {
+    if (templates.length < 2) return;
+    const idx = templates.indexOf(currentTemplate);
+    const newIdx = idx <= 0 ? templates.length - 1 : idx - 1;
+    switchTemplate(templates[newIdx]);
 }
 
-// Update date display
-function updateDateDisplay() {
-    document.getElementById('dateWeekday').textContent = formatWeekday(currentDate);
-    document.getElementById('currentDate').textContent = formatFullDate(currentDate);
+function nextTemplate() {
+    if (templates.length < 2) return;
+    const idx = templates.indexOf(currentTemplate);
+    const newIdx = idx >= templates.length - 1 ? 0 : idx + 1;
+    switchTemplate(templates[newIdx]);
+}
+
+function switchTemplate(name) {
+    currentTemplate = name;
+    localStorage.setItem('timetable_current', name);
+    document.getElementById('templateName').textContent = name;
+    cancelEdit();
+    renderTasks();
+    hideTemplateMenu();
+}
+
+// Template menu
+function showTemplateMenu() {
+    renderTemplateList();
+    document.getElementById('templateMenu').classList.add('visible');
+    document.getElementById('templateOverlay').classList.add('visible');
+}
+
+function hideTemplateMenu() {
+    document.getElementById('templateMenu').classList.remove('visible');
+    document.getElementById('templateOverlay').classList.remove('visible');
+}
+
+function renderTemplateList() {
+    const container = document.getElementById('templateList');
+    container.innerHTML = templates.map(name => `
+        <div class="template-item ${name === currentTemplate ? 'active' : ''}" onclick="switchTemplate('${escapeHtml(name)}')">
+            <span class="template-item-name">${escapeHtml(name)}</span>
+            <div class="template-item-actions">
+                <button class="template-action-btn" onclick="event.stopPropagation(); renameTemplate('${escapeHtml(name)}')" title="Rename">✎</button>
+                <button class="template-action-btn" onclick="event.stopPropagation(); deleteTemplate('${escapeHtml(name)}')" title="Delete">×</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function createTemplate() {
+    const input = document.getElementById('newTemplateName');
+    const name = input.value.trim();
+    if (!name) return;
+    if (templates.includes(name)) {
+        input.value = '';
+        return;
+    }
+    templates.push(name);
+    saveTemplates();
+    input.value = '';
+    switchTemplate(name);
+}
+
+function renameTemplate(oldName) {
+    const newName = prompt('Rename schedule:', oldName);
+    if (!newName || newName.trim() === '' || newName === oldName) return;
+    if (templates.includes(newName)) return;
+
+    // Update templates list
+    const idx = templates.indexOf(oldName);
+    templates[idx] = newName;
+    saveTemplates();
+
+    // Move data to new key
+    const oldKey = getTemplateKey(oldName);
+    const newKey = getTemplateKey(newName);
+    const data = localStorage.getItem(oldKey);
+    if (data) {
+        localStorage.setItem(newKey, data);
+        localStorage.removeItem(oldKey);
+    }
+
+    // Update current if needed
+    if (currentTemplate === oldName) {
+        switchTemplate(newName);
+    } else {
+        renderTemplateList();
+    }
+}
+
+function deleteTemplate(name) {
+    if (templates.length <= 1) return;
+    if (!confirm(`Delete "${name}"?`)) return;
+
+    // Remove from list
+    templates = templates.filter(t => t !== name);
+    saveTemplates();
+
+    // Remove data
+    localStorage.removeItem(getTemplateKey(name));
+
+    // Switch if current was deleted
+    if (currentTemplate === name) {
+        switchTemplate(templates[0]);
+    } else {
+        renderTemplateList();
+    }
 }
 
 // Select color
@@ -166,7 +266,6 @@ function saveTask() {
     const tasks = loadData();
 
     if (editingTaskId) {
-        // Update existing task
         const task = tasks.find(t => t.id === editingTaskId);
         if (task) {
             task.startTime = startTime;
@@ -176,7 +275,6 @@ function saveTask() {
         }
         cancelEdit();
     } else {
-        // Add new task
         tasks.push({
             id: Date.now(),
             startTime,
@@ -204,20 +302,17 @@ function editTask(id) {
 
     editingTaskId = id;
 
-    // Fill form with task data
     document.getElementById('startTime').value = task.startTime;
     document.getElementById('endTime').value = task.endTime;
     document.getElementById('taskInput').value = task.text;
     selectColor(task.color);
 
-    // Update UI to show edit mode
     document.getElementById('btnText').textContent = 'Update';
     document.getElementById('btnIcon').textContent = '✓';
     document.getElementById('addBtn').classList.add('editing');
     document.querySelector('.cancel-btn').classList.add('visible');
-    document.querySelector('.section-title').textContent = 'Edit Task';
+    document.querySelector('.add-card .section-title').textContent = 'Edit Task';
 
-    // Scroll to form and focus
     document.querySelector('.add-card').scrollIntoView({ behavior: 'smooth' });
     document.getElementById('taskInput').focus();
 }
@@ -226,18 +321,16 @@ function editTask(id) {
 function cancelEdit() {
     editingTaskId = null;
 
-    // Reset form
     document.getElementById('startTime').value = '09:00';
     document.getElementById('endTime').value = '10:00';
     document.getElementById('taskInput').value = '';
     selectColor('coral');
 
-    // Update UI back to add mode
     document.getElementById('btnText').textContent = 'Add';
     document.getElementById('btnIcon').textContent = '+';
     document.getElementById('addBtn').classList.remove('editing');
     document.querySelector('.cancel-btn').classList.remove('visible');
-    document.querySelector('.section-title').textContent = 'Add Task';
+    document.querySelector('.add-card .section-title').textContent = 'Add Task';
 }
 
 // Toggle task completion
@@ -335,18 +428,21 @@ function renderTasks() {
 
 // Export all data to JSON file
 function exportData() {
-    const allData = {};
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('timeplanner_')) {
-            try {
-                const tasks = JSON.parse(localStorage.getItem(key));
-                if (Array.isArray(tasks)) {
-                    allData[key] = tasks;
-                }
-            } catch (e) {
-                // Skip non-JSON values
+    const allData = {
+        templates: templates,
+        current: currentTemplate,
+        schedules: {}
+    };
+
+    for (const name of templates) {
+        const key = getTemplateKey(name);
+        try {
+            const tasks = JSON.parse(localStorage.getItem(key));
+            if (Array.isArray(tasks)) {
+                allData.schedules[name] = tasks;
             }
+        } catch (e) {
+            // Skip invalid data
         }
     }
 
@@ -354,7 +450,7 @@ function exportData() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `timeplanner-backup-${getDateKey(new Date())}.json`;
+    a.download = `timetable-backup-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -370,12 +466,23 @@ function importData(event) {
     reader.onload = (e) => {
         try {
             const data = JSON.parse(e.target.result);
-            for (const [key, value] of Object.entries(data)) {
-                if (key.startsWith('timeplanner_') && Array.isArray(value)) {
-                    localStorage.setItem(key, JSON.stringify(value));
+
+            if (data.templates && data.schedules) {
+                templates = data.templates;
+                saveTemplates();
+
+                for (const [name, tasks] of Object.entries(data.schedules)) {
+                    if (Array.isArray(tasks)) {
+                        localStorage.setItem(getTemplateKey(name), JSON.stringify(tasks));
+                    }
+                }
+
+                if (data.current && templates.includes(data.current)) {
+                    switchTemplate(data.current);
+                } else if (templates.length > 0) {
+                    switchTemplate(templates[0]);
                 }
             }
-            renderTasks();
         } catch (err) {
             // Invalid file
         }
@@ -386,11 +493,31 @@ function importData(event) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Load templates
+    templates = loadTemplates();
+
+    // Create default template if none exist
+    if (templates.length === 0) {
+        templates = ['My Schedule'];
+        saveTemplates();
+    }
+
+    // Load current template
+    currentTemplate = localStorage.getItem('timetable_current') || templates[0];
+    if (!templates.includes(currentTemplate)) {
+        currentTemplate = templates[0];
+    }
+
+    document.getElementById('templateName').textContent = currentTemplate;
+
     document.getElementById('taskInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') saveTask();
         if (e.key === 'Escape') cancelEdit();
     });
 
-    updateDateDisplay();
+    document.getElementById('newTemplateName').addEventListener('keydown', e => {
+        if (e.key === 'Enter') createTemplate();
+    });
+
     renderTasks();
 });

@@ -157,16 +157,21 @@ header {
 }
 
 /* ========================================
-   DATE NAVIGATION
+   TEMPLATE NAVIGATION
    ======================================== */
 
-.date-nav {
+.template-nav {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-lg);
     margin-bottom: var(--space-xl);
     animation: fadeIn 0.6s ease 0.1s both;
+}
+
+.template-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
 }
 
 .nav-btn {
@@ -192,12 +197,20 @@ header {
     transform: scale(0.95);
 }
 
-.date-info {
+.template-info {
     text-align: center;
     min-width: 140px;
+    cursor: pointer;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    transition: background 0.2s ease;
 }
 
-.date-day {
+.template-info:hover {
+    background: var(--bg-input);
+}
+
+.template-name {
     display: block;
     font-size: 1.5rem;
     font-weight: 600;
@@ -205,11 +218,164 @@ header {
     color: var(--text);
 }
 
-.date-full {
+.template-hint {
     display: block;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     margin-top: 2px;
+}
+
+/* Template Menu */
+.template-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 100;
+}
+
+.template-overlay.visible {
+    display: block;
+}
+
+.template-menu {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 320px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    z-index: 101;
+    overflow: hidden;
+}
+
+.template-menu.visible {
+    display: block;
+}
+
+.template-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+}
+
+.menu-close-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.menu-close-btn:hover {
+    background: var(--bg-input);
+    color: var(--text);
+}
+
+.template-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.template-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid var(--border);
+}
+
+.template-item:hover {
+    background: var(--bg-input);
+}
+
+.template-item.active {
+    background: var(--bg-input);
+    border-left: 3px solid var(--coral);
+}
+
+.template-item-name {
+    font-size: 0.95rem;
+}
+
+.template-item-actions {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.template-action-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.template-action-btn:hover {
+    background: var(--bg-card);
+    color: var(--coral);
+}
+
+.template-menu-footer {
+    display: flex;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-top: 1px solid var(--border);
+}
+
+.template-input {
+    flex: 1;
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font);
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--bg-input);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.template-input:focus {
+    outline: none;
+    border-color: var(--coral);
+    background: var(--bg-card);
+}
+
+.add-template-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--coral);
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.add-template-btn:hover {
+    background: #d06a4f;
 }
 
 /* ========================================

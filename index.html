@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Planner</title>
+    <title>Timetable</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
         <header>
             <div class="logo">
                 <span class="logo-icon">○</span>
-                <span class="logo-text">Planner</span>
+                <span class="logo-text">Timetable</span>
             </div>
             <div class="header-actions">
                 <button class="icon-btn" onclick="exportData()" title="Export">↓</button>
@@ -27,14 +27,29 @@
             </div>
         </header>
 
-        <nav class="date-nav">
-            <button class="nav-btn" onclick="changeDate(-1)">←</button>
-            <div class="date-info">
-                <span class="date-day" id="dateWeekday">Monday</span>
-                <span class="date-full" id="currentDate">Jan 26, 2026</span>
+        <nav class="template-nav">
+            <div class="template-selector">
+                <button class="nav-btn" onclick="prevTemplate()">←</button>
+                <div class="template-info" onclick="showTemplateMenu()">
+                    <span class="template-name" id="templateName">My Schedule</span>
+                    <span class="template-hint">tap to switch</span>
+                </div>
+                <button class="nav-btn" onclick="nextTemplate()">→</button>
             </div>
-            <button class="nav-btn" onclick="changeDate(1)">→</button>
         </nav>
+
+        <div class="template-menu" id="templateMenu">
+            <div class="template-menu-header">
+                <span>My Schedules</span>
+                <button class="menu-close-btn" onclick="hideTemplateMenu()">×</button>
+            </div>
+            <div class="template-list" id="templateList"></div>
+            <div class="template-menu-footer">
+                <input type="text" id="newTemplateName" placeholder="New schedule name..." class="template-input">
+                <button class="add-template-btn" onclick="createTemplate()">+</button>
+            </div>
+        </div>
+        <div class="template-overlay" id="templateOverlay" onclick="hideTemplateMenu()"></div>
 
         <main>
             <section class="add-card">
@@ -81,7 +96,7 @@
 
             <section class="tasks-section">
                 <div class="tasks-header">
-                    <span class="section-title">Today</span>
+                    <span class="section-title">Schedule</span>
                     <span class="task-count" id="taskCount">0 tasks</span>
                 </div>
                 <div class="tasks-list" id="taskContainer"></div>
