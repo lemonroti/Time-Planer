@@ -4,49 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
+    <div class="app">
         <header>
-            <h1>Time Planner</h1>
-            <div class="date-nav">
-                <button onclick="changeDate(-1)">&lt;</button>
-                <span class="current-date" id="currentDate"></span>
-                <button onclick="changeDate(1)">&gt;</button>
+            <div class="logo">
+                <span class="logo-icon">○</span>
+                <span class="logo-text">Planner</span>
+            </div>
+            <div class="hours-badge" id="hoursLeft">
+                <span class="hours-num">24</span>
+                <span class="hours-label">hrs free</span>
             </div>
         </header>
 
-        <div class="add-section">
-            <div class="add-section-header">
-                <h3>Add New Task</h3>
-                <span class="hours-left" id="hoursLeft">24 hrs left</span>
+        <nav class="date-nav">
+            <button class="nav-btn" onclick="changeDate(-1)">←</button>
+            <div class="date-info">
+                <span class="date-day" id="dateWeekday">Monday</span>
+                <span class="date-full" id="currentDate">Jan 26, 2026</span>
             </div>
-            <div class="add-form">
-                <div class="time-inputs">
-                    <input type="time" id="startTime" value="09:00">
-                    <span>to</span>
-                    <input type="time" id="endTime" value="10:00">
-                </div>
-                <input type="text" class="task-input" id="taskInput" placeholder="What do you want to do?">
-                <div class="color-picker">
-                    <div class="color-dot color-purple selected" data-color="purple" onclick="selectColor('purple')"></div>
-                    <div class="color-dot color-blue" data-color="blue" onclick="selectColor('blue')"></div>
-                    <div class="color-dot color-green" data-color="green" onclick="selectColor('green')"></div>
-                    <div class="color-dot color-orange" data-color="orange" onclick="selectColor('orange')"></div>
-                    <div class="color-dot color-red" data-color="red" onclick="selectColor('red')"></div>
-                </div>
-                <button class="btn-add" onclick="addTask()">Add</button>
-            </div>
-        </div>
+            <button class="nav-btn" onclick="changeDate(1)">→</button>
+        </nav>
 
-        <div class="task-list">
-            <div class="task-list-header">
-                <h3>Today's Schedule</h3>
-                <span class="task-count" id="taskCount">0 tasks</span>
-            </div>
-            <div class="tasks" id="taskContainer"></div>
-        </div>
+        <main>
+            <section class="add-card">
+                <div class="add-header">
+                    <span class="section-title">Add Task</span>
+                </div>
+
+                <div class="add-body">
+                    <div class="time-row">
+                        <div class="time-group">
+                            <input type="time" id="startTime" value="09:00">
+                        </div>
+                        <span class="time-divider">→</span>
+                        <div class="time-group">
+                            <input type="time" id="endTime" value="10:00">
+                        </div>
+                    </div>
+
+                    <input
+                        type="text"
+                        class="task-input"
+                        id="taskInput"
+                        placeholder="What's on your schedule?"
+                    >
+
+                    <div class="add-footer">
+                        <div class="color-options">
+                            <button class="color-btn active" data-color="coral" onclick="selectColor('coral')"></button>
+                            <button class="color-btn" data-color="sky" onclick="selectColor('sky')"></button>
+                            <button class="color-btn" data-color="mint" onclick="selectColor('mint')"></button>
+                            <button class="color-btn" data-color="sand" onclick="selectColor('sand')"></button>
+                            <button class="color-btn" data-color="slate" onclick="selectColor('slate')"></button>
+                        </div>
+                        <button class="add-btn" onclick="addTask()">
+                            Add
+                            <span class="add-icon">+</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tasks-section">
+                <div class="tasks-header">
+                    <span class="section-title">Today</span>
+                    <span class="task-count" id="taskCount">0 tasks</span>
+                </div>
+                <div class="tasks-list" id="taskContainer"></div>
+            </section>
+        </main>
     </div>
 
     <script src="app.js"></script>

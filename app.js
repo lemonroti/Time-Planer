@@ -1,14 +1,14 @@
 // State
 let currentDate = new Date();
-let selectedColor = 'purple';
+let selectedColor = 'coral';
 
-// Color gradients
-const colorGradients = {
-    purple: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    blue: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    green: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    orange: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    red: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+// Color values
+const colors = {
+    coral: '#e07a5f',
+    sky: '#5b9bd5',
+    mint: '#6bab90',
+    sand: '#d4a574',
+    slate: '#7c8594'
 };
 
 // Get date key for storage
@@ -29,10 +29,14 @@ function saveData(data) {
     localStorage.setItem('timeplanner_' + key, JSON.stringify(data));
 }
 
-// Format date for display
-function formatDate(date) {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+// Format weekday
+function formatWeekday(date) {
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+// Format full date
+function formatFullDate(date) {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // Format time for display
@@ -44,36 +48,36 @@ function formatTime(time) {
     return `${hour12}:${minutes} ${ampm}`;
 }
 
-// Calculate duration in hours between two times
+// Calculate duration
 function calcDuration(startTime, endTime) {
     const [startH, startM] = startTime.split(':').map(Number);
     const [endH, endM] = endTime.split(':').map(Number);
     const startMins = startH * 60 + startM;
     const endMins = endH * 60 + endM;
-    const diffMins = endMins - startMins;
-    return diffMins / 60;
+    return (endMins - startMins) / 60;
 }
 
-// Format duration for display
+// Format duration
 function formatDuration(hours) {
-    if (hours <= 0) return '0 hrs';
-    if (hours < 1) return `${Math.round(hours * 60)} min`;
-    if (hours === 1) return '1 hr';
-    if (Number.isInteger(hours)) return `${hours} hrs`;
-    return `${hours.toFixed(1)} hrs`;
+    if (hours <= 0) return '0h';
+    if (hours < 1) return `${Math.round(hours * 60)}m`;
+    if (hours === 1) return '1h';
+    if (Number.isInteger(hours)) return `${hours}h`;
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-// Convert time string to minutes
+// Convert time to minutes
 function timeToMins(time) {
     const [h, m] = time.split(':').map(Number);
     return h * 60 + m;
 }
 
-// Calculate total allocated hours (merge overlapping intervals)
+// Calculate total allocated hours
 function calcTotalAllocated(tasks) {
     if (tasks.length === 0) return 0;
 
-    // Convert to intervals and sort by start
     const intervals = tasks
         .map(t => [timeToMins(t.startTime), timeToMins(t.endTime)])
         .filter(([s, e]) => e > s)
@@ -81,26 +85,21 @@ function calcTotalAllocated(tasks) {
 
     if (intervals.length === 0) return 0;
 
-    // Merge overlapping intervals
     const merged = [intervals[0]];
     for (let i = 1; i < intervals.length; i++) {
         const last = merged[merged.length - 1];
         const curr = intervals[i];
         if (curr[0] <= last[1]) {
-            // Overlapping - extend the end if needed
             last[1] = Math.max(last[1], curr[1]);
         } else {
-            // No overlap - add new interval
             merged.push(curr);
         }
     }
 
-    // Sum up merged intervals
-    const totalMins = merged.reduce((sum, [s, e]) => sum + (e - s), 0);
-    return totalMins / 60;
+    return merged.reduce((sum, [s, e]) => sum + (e - s), 0) / 60;
 }
 
-// Check if task is a sub-task (inside another task)
+// Check if task is a sub-task
 function isSubTask(task, allTasks) {
     const tStart = timeToMins(task.startTime);
     const tEnd = timeToMins(task.endTime);
@@ -108,7 +107,6 @@ function isSubTask(task, allTasks) {
         if (other.id === task.id) return false;
         const oStart = timeToMins(other.startTime);
         const oEnd = timeToMins(other.endTime);
-        // Task is inside other if: other starts before/at task AND other ends after/at task
         return oStart <= tStart && oEnd >= tEnd && !(oStart === tStart && oEnd === tEnd);
     });
 }
@@ -117,8 +115,19 @@ function isSubTask(task, allTasks) {
 function updateHoursLeft() {
     const tasks = loadData();
     const allocated = calcTotalAllocated(tasks);
-    const left = 24 - allocated;
-    document.getElementById('hoursLeft').textContent = `${formatDuration(left > 0 ? left : 0)} left`;
+    const left = Math.max(0, 24 - allocated);
+
+    const hours = Math.floor(left);
+    const mins = Math.round((left - hours) * 60);
+
+    const numEl = document.querySelector('.hours-num');
+    if (mins > 0 && hours > 0) {
+        numEl.textContent = `${hours}h${mins}m`;
+    } else if (mins > 0) {
+        numEl.textContent = `${mins}m`;
+    } else {
+        numEl.textContent = hours;
+    }
 }
 
 // Change date
@@ -130,14 +139,15 @@ function changeDate(delta) {
 
 // Update date display
 function updateDateDisplay() {
-    document.getElementById('currentDate').textContent = formatDate(currentDate);
+    document.getElementById('dateWeekday').textContent = formatWeekday(currentDate);
+    document.getElementById('currentDate').textContent = formatFullDate(currentDate);
 }
 
 // Select color
 function selectColor(color) {
     selectedColor = color;
-    document.querySelectorAll('.color-dot').forEach(el => {
-        el.classList.toggle('selected', el.dataset.color === color);
+    document.querySelectorAll('.color-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.color === color);
     });
 }
 
@@ -162,13 +172,11 @@ function addTask() {
         completed: false
     });
 
-    // Sort by start time
     tasks.sort((a, b) => a.startTime.localeCompare(b.startTime));
 
     saveData(tasks);
     renderTasks();
 
-    // Clear input
     document.getElementById('taskInput').value = '';
     document.getElementById('taskInput').focus();
 }
@@ -192,63 +200,65 @@ function deleteTask(id) {
     renderTasks();
 }
 
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Render tasks
 function renderTasks() {
     const container = document.getElementById('taskContainer');
     const tasks = loadData();
 
-    document.getElementById('taskCount').textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''}`;
+    document.getElementById('taskCount').textContent = `${tasks.length} ${tasks.length === 1 ? 'task' : 'tasks'}`;
 
     if (tasks.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="icon">📅</div>
-                <p>No tasks for this day</p>
-                <p>Add your first task above!</p>
+                <div class="empty-icon">○</div>
+                <p class="empty-title">No tasks yet</p>
+                <p class="empty-subtitle">Add your first task above</p>
             </div>
         `;
         updateHoursLeft();
         return;
     }
 
-    container.innerHTML = tasks.map(task => {
+    container.innerHTML = tasks.map((task, i) => {
         const duration = calcDuration(task.startTime, task.endTime);
         const isSub = isSubTask(task, tasks);
+        const color = colors[task.color] || colors.coral;
+
         return `
-        <div class="task-item ${task.completed ? 'completed' : ''} ${isSub ? 'sub-task' : ''}">
-            <div class="task-color-bar" style="background: ${colorGradients[task.color]}"></div>
-            <div class="task-main">
-                <div class="task-time-row">
+            <div class="task-item ${task.completed ? 'completed' : ''} ${isSub ? 'sub-task' : ''}" style="animation-delay: ${i * 0.05}s">
+                <div class="task-color" style="background: ${color}"></div>
+                <div class="task-body">
                     <div class="task-time">
-                        ${formatTime(task.startTime)}
-                        <span class="end-time">- ${formatTime(task.endTime)}</span>
+                        <span class="task-time-text">${formatTime(task.startTime)} → ${formatTime(task.endTime)}</span>
+                        <span class="task-duration">${formatDuration(duration)}</span>
+                        ${isSub ? '<span class="sub-label">sub</span>' : ''}
                     </div>
-                    <span class="task-duration">${formatDuration(duration)}</span>
-                    ${isSub ? '<span class="sub-task-label">sub</span>' : ''}
+                    <div class="task-text">${escapeHtml(task.text)}</div>
                 </div>
-                <div class="task-content">${task.text}</div>
+                <div class="task-actions">
+                    <button class="task-btn complete-btn" onclick="toggleTask(${task.id})">✓</button>
+                    <button class="task-btn delete-btn" onclick="deleteTask(${task.id})">×</button>
+                </div>
             </div>
-            <div class="task-actions">
-                <button class="btn-complete" onclick="toggleTask(${task.id})">✓</button>
-                <button class="btn-delete" onclick="deleteTask(${task.id})">×</button>
-            </div>
-        </div>
-    `}).join('');
+        `;
+    }).join('');
 
     updateHoursLeft();
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Keyboard shortcut
-    document.getElementById('taskInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            addTask();
-        }
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('taskInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') addTask();
     });
 
-    // Initialize
     updateDateDisplay();
     renderTasks();
-    updateHoursLeft();
 });
