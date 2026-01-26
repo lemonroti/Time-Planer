@@ -1,0 +1,254 @@
+// State
+let currentDate = new Date();
+let selectedColor = 'purple';
+
+// Color gradients
+const colorGradients = {
+    purple: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    blue: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    green: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    orange: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    red: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+};
+
+// Get date key for storage
+function getDateKey(date) {
+    return date.toISOString().split('T')[0];
+}
+
+// Load data from localStorage
+function loadData() {
+    const key = getDateKey(currentDate);
+    const data = localStorage.getItem('timeplanner_' + key);
+    return data ? JSON.parse(data) : [];
+}
+
+// Save data to localStorage
+function saveData(data) {
+    const key = getDateKey(currentDate);
+    localStorage.setItem('timeplanner_' + key, JSON.stringify(data));
+}
+
+// Format date for display
+function formatDate(date) {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+}
+
+// Format time for display
+function formatTime(time) {
+    const [hours, minutes] = time.split(':');
+    const h = parseInt(hours);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+}
+
+// Calculate duration in hours between two times
+function calcDuration(startTime, endTime) {
+    const [startH, startM] = startTime.split(':').map(Number);
+    const [endH, endM] = endTime.split(':').map(Number);
+    const startMins = startH * 60 + startM;
+    const endMins = endH * 60 + endM;
+    const diffMins = endMins - startMins;
+    return diffMins / 60;
+}
+
+// Format duration for display
+function formatDuration(hours) {
+    if (hours <= 0) return '0 hrs';
+    if (hours < 1) return `${Math.round(hours * 60)} min`;
+    if (hours === 1) return '1 hr';
+    if (Number.isInteger(hours)) return `${hours} hrs`;
+    return `${hours.toFixed(1)} hrs`;
+}
+
+// Convert time string to minutes
+function timeToMins(time) {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+}
+
+// Calculate total allocated hours (merge overlapping intervals)
+function calcTotalAllocated(tasks) {
+    if (tasks.length === 0) return 0;
+
+    // Convert to intervals and sort by start
+    const intervals = tasks
+        .map(t => [timeToMins(t.startTime), timeToMins(t.endTime)])
+        .filter(([s, e]) => e > s)
+        .sort((a, b) => a[0] - b[0]);
+
+    if (intervals.length === 0) return 0;
+
+    // Merge overlapping intervals
+    const merged = [intervals[0]];
+    for (let i = 1; i < intervals.length; i++) {
+        const last = merged[merged.length - 1];
+        const curr = intervals[i];
+        if (curr[0] <= last[1]) {
+            // Overlapping - extend the end if needed
+            last[1] = Math.max(last[1], curr[1]);
+        } else {
+            // No overlap - add new interval
+            merged.push(curr);
+        }
+    }
+
+    // Sum up merged intervals
+    const totalMins = merged.reduce((sum, [s, e]) => sum + (e - s), 0);
+    return totalMins / 60;
+}
+
+// Check if task is a sub-task (inside another task)
+function isSubTask(task, allTasks) {
+    const tStart = timeToMins(task.startTime);
+    const tEnd = timeToMins(task.endTime);
+    return allTasks.some(other => {
+        if (other.id === task.id) return false;
+        const oStart = timeToMins(other.startTime);
+        const oEnd = timeToMins(other.endTime);
+        // Task is inside other if: other starts before/at task AND other ends after/at task
+        return oStart <= tStart && oEnd >= tEnd && !(oStart === tStart && oEnd === tEnd);
+    });
+}
+
+// Update hours left display
+function updateHoursLeft() {
+    const tasks = loadData();
+    const allocated = calcTotalAllocated(tasks);
+    const left = 24 - allocated;
+    document.getElementById('hoursLeft').textContent = `${formatDuration(left > 0 ? left : 0)} left`;
+}
+
+// Change date
+function changeDate(delta) {
+    currentDate.setDate(currentDate.getDate() + delta);
+    updateDateDisplay();
+    renderTasks();
+}
+
+// Update date display
+function updateDateDisplay() {
+    document.getElementById('currentDate').textContent = formatDate(currentDate);
+}
+
+// Select color
+function selectColor(color) {
+    selectedColor = color;
+    document.querySelectorAll('.color-dot').forEach(el => {
+        el.classList.toggle('selected', el.dataset.color === color);
+    });
+}
+
+// Add task
+function addTask() {
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    const taskText = document.getElementById('taskInput').value.trim();
+
+    if (!taskText) {
+        document.getElementById('taskInput').focus();
+        return;
+    }
+
+    const tasks = loadData();
+    tasks.push({
+        id: Date.now(),
+        startTime,
+        endTime,
+        text: taskText,
+        color: selectedColor,
+        completed: false
+    });
+
+    // Sort by start time
+    tasks.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    saveData(tasks);
+    renderTasks();
+
+    // Clear input
+    document.getElementById('taskInput').value = '';
+    document.getElementById('taskInput').focus();
+}
+
+// Toggle task completion
+function toggleTask(id) {
+    const tasks = loadData();
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+        task.completed = !task.completed;
+        saveData(tasks);
+        renderTasks();
+    }
+}
+
+// Delete task
+function deleteTask(id) {
+    let tasks = loadData();
+    tasks = tasks.filter(t => t.id !== id);
+    saveData(tasks);
+    renderTasks();
+}
+
+// Render tasks
+function renderTasks() {
+    const container = document.getElementById('taskContainer');
+    const tasks = loadData();
+
+    document.getElementById('taskCount').textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''}`;
+
+    if (tasks.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">📅</div>
+                <p>No tasks for this day</p>
+                <p>Add your first task above!</p>
+            </div>
+        `;
+        updateHoursLeft();
+        return;
+    }
+
+    container.innerHTML = tasks.map(task => {
+        const duration = calcDuration(task.startTime, task.endTime);
+        const isSub = isSubTask(task, tasks);
+        return `
+        <div class="task-item ${task.completed ? 'completed' : ''} ${isSub ? 'sub-task' : ''}">
+            <div class="task-color-bar" style="background: ${colorGradients[task.color]}"></div>
+            <div class="task-main">
+                <div class="task-time-row">
+                    <div class="task-time">
+                        ${formatTime(task.startTime)}
+                        <span class="end-time">- ${formatTime(task.endTime)}</span>
+                    </div>
+                    <span class="task-duration">${formatDuration(duration)}</span>
+                    ${isSub ? '<span class="sub-task-label">sub</span>' : ''}
+                </div>
+                <div class="task-content">${task.text}</div>
+            </div>
+            <div class="task-actions">
+                <button class="btn-complete" onclick="toggleTask(${task.id})">✓</button>
+                <button class="btn-delete" onclick="deleteTask(${task.id})">×</button>
+            </div>
+        </div>
+    `}).join('');
+
+    updateHoursLeft();
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Keyboard shortcut
+    document.getElementById('taskInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            addTask();
+        }
+    });
+
+    // Initialize
+    updateDateDisplay();
+    renderTasks();
+    updateHoursLeft();
+});
