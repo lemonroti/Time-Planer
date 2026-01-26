@@ -285,12 +285,31 @@ function renderTasks() {
         return;
     }
 
-    container.innerHTML = tasks.map((task, i) => {
+    let html = '';
+    for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
         const duration = calcDuration(task.startTime, task.endTime);
         const isSub = isSubTask(task, tasks);
         const color = colors[task.color] || colors.coral;
 
-        return `
+        // Check for gap with previous non-sub task
+        if (i > 0 && !isSub) {
+            const prevTask = tasks.slice(0, i).reverse().find(t => !isSubTask(t, tasks));
+            if (prevTask) {
+                const gapMins = timeToMins(task.startTime) - timeToMins(prevTask.endTime);
+                if (gapMins > 0) {
+                    html += `
+                        <div class="task-gap">
+                            <span class="gap-line"></span>
+                            <span class="gap-label">${formatDuration(gapMins / 60)} free</span>
+                            <span class="gap-line"></span>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        html += `
             <div class="task-item ${task.completed ? 'completed' : ''} ${isSub ? 'sub-task' : ''}" style="animation-delay: ${i * 0.05}s">
                 <div class="task-color" style="background: ${color}"></div>
                 <div class="task-body">
@@ -308,7 +327,8 @@ function renderTasks() {
                 </div>
             </div>
         `;
-    }).join('');
+    }
+    container.innerHTML = html;
 
     updateHoursLeft();
 }

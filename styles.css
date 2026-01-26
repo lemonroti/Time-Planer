@@ -516,6 +516,28 @@ header {
     border-left: 2px solid var(--border);
 }
 
+/* Gap indicator */
+.task-gap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-sm) 0;
+}
+
+.gap-line {
+    display: none;
+}
+
+.gap-label {
+    font-size: 0.75rem;
+    color: var(--text);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: var(--space-xs) var(--space-md);
+    box-shadow: var(--shadow-sm);
+}
+
 .sub-label {
     font-size: 0.65rem;
     color: var(--text-muted);
