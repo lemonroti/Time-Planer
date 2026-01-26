@@ -313,6 +313,57 @@ function renderTasks() {
     updateHoursLeft();
 }
 
+// Export all data to JSON file
+function exportData() {
+    const allData = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('timeplanner_')) {
+            try {
+                const tasks = JSON.parse(localStorage.getItem(key));
+                if (Array.isArray(tasks)) {
+                    allData[key] = tasks;
+                }
+            } catch (e) {
+                // Skip non-JSON values
+            }
+        }
+    }
+
+    const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `timeplanner-backup-${getDateKey(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Import data from JSON file
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            for (const [key, value] of Object.entries(data)) {
+                if (key.startsWith('timeplanner_') && Array.isArray(value)) {
+                    localStorage.setItem(key, JSON.stringify(value));
+                }
+            }
+            renderTasks();
+        } catch (err) {
+            // Invalid file
+        }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('taskInput').addEventListener('keydown', e => {

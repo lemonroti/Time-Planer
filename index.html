@@ -16,6 +16,11 @@
                 <span class="logo-icon">○</span>
                 <span class="logo-text">Planner</span>
             </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="exportData()" title="Export">↓</button>
+                <button class="icon-btn" onclick="document.getElementById('importFile').click()" title="Import">↑</button>
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)" hidden>
+            </div>
             <div class="hours-badge" id="hoursLeft">
                 <span class="hours-num">24</span>
                 <span class="hours-label">hrs free</span>

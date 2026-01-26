@@ -105,6 +105,34 @@ header {
     letter-spacing: -0.02em;
 }
 
+.header-actions {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.icon-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.icon-btn:hover {
+    border-color: var(--coral);
+    color: var(--coral);
+    transform: scale(1.05);
+}
+
+.icon-btn:active {
+    transform: scale(0.95);
+}
+
 .hours-badge {
     display: flex;
     align-items: baseline;
