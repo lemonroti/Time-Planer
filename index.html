@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
         }
 
@@ -65,230 +65,96 @@
             text-align: center;
         }
 
-        .schedule {
+        /* Add Task Section */
+        .add-section {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-
-        .time-slot {
-            display: flex;
-            border-bottom: 1px solid #eee;
-            min-height: 60px;
-            transition: background 0.2s;
-        }
-
-        .time-slot:last-child {
-            border-bottom: none;
-        }
-
-        .time-slot:hover {
-            background: #f8f9ff;
-        }
-
-        .time-label {
-            width: 80px;
-            padding: 15px;
-            font-size: 0.85rem;
-            color: #666;
-            font-weight: 500;
-            border-right: 1px solid #eee;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .slot-content {
-            flex: 1;
-            padding: 10px 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: flex-start;
-            cursor: pointer;
-        }
-
-        .task {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .task.completed {
-            background: #a0a0a0;
-            text-decoration: line-through;
-        }
-
-        .task .delete-btn {
-            background: rgba(255,255,255,0.3);
-            border: none;
-            color: white;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
-
-        .task .delete-btn:hover {
-            background: rgba(255,255,255,0.5);
-        }
-
-        .add-placeholder {
-            color: #aaa;
-            font-size: 0.9rem;
-            padding: 8px;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            width: 90%;
-            max-width: 400px;
-            animation: modalIn 0.3s ease;
-        }
-
-        @keyframes modalIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .modal h2 {
+            padding: 20px;
             margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .add-section h3 {
+            margin-bottom: 15px;
             color: #333;
         }
 
-        .modal input[type="text"] {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            font-size: 1rem;
-            margin-bottom: 15px;
-            transition: border-color 0.3s;
+        .add-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .modal input[type="text"]:focus {
+        .time-inputs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .time-inputs input[type="time"] {
+            padding: 10px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 120px;
+        }
+
+        .time-inputs span {
+            color: #666;
+        }
+
+        .task-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .task-input:focus, .time-inputs input:focus {
             outline: none;
             border-color: #667eea;
         }
 
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .modal-buttons button {
-            padding: 10px 20px;
+        .btn-add {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border: none;
+            padding: 10px 25px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            font-weight: 500;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .modal-buttons button:hover {
-            transform: translateY(-1px);
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
-        .btn-cancel {
-            background: #eee;
-            color: #666;
-        }
-
-        .btn-save {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-save:hover {
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        /* Quick Stats */
-        .stats {
+        /* Color picker */
+        .color-picker {
             display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            justify-content: center;
+            gap: 8px;
+            align-items: center;
         }
 
-        .stat-card {
-            background: rgba(255,255,255,0.2);
-            padding: 15px 25px;
-            border-radius: 12px;
-            color: white;
-            text-align: center;
-        }
-
-        .stat-card .number {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-
-        .stat-card .label {
-            font-size: 0.85rem;
-            opacity: 0.9;
-        }
-
-        /* Color options for tasks */
-        .color-options {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .color-option {
-            width: 30px;
-            height: 30px;
+        .color-dot {
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             cursor: pointer;
             border: 3px solid transparent;
             transition: transform 0.2s;
         }
 
-        .color-option:hover {
+        .color-dot:hover {
             transform: scale(1.1);
         }
 
-        .color-option.selected {
+        .color-dot.selected {
             border-color: #333;
         }
 
@@ -298,20 +164,157 @@
         .color-orange { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
         .color-red { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
 
+        /* Task List */
+        .task-list {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .task-list-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-list-header h3 {
+            color: #333;
+        }
+
+        .task-count {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .tasks {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            gap: 15px;
+            transition: background 0.2s;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item:hover {
+            background: #f8f9ff;
+        }
+
+        .task-time {
+            font-size: 0.9rem;
+            color: #666;
+            min-width: 110px;
+            font-weight: 500;
+        }
+
+        .task-time .end-time {
+            color: #999;
+        }
+
+        .task-color-bar {
+            width: 4px;
+            height: 40px;
+            border-radius: 2px;
+        }
+
+        .task-content {
+            flex: 1;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .task-item.completed .task-content {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-complete, .btn-delete {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+
+        .btn-complete {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+
+        .btn-complete:hover {
+            transform: scale(1.1);
+            background: #c8e6c9;
+        }
+
+        .task-item.completed .btn-complete {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ffebee;
+            color: #f44336;
+        }
+
+        .btn-delete:hover {
+            transform: scale(1.1);
+            background: #ffcdd2;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
         /* Responsive */
-        @media (max-width: 600px) {
-            .time-label {
-                width: 60px;
-                font-size: 0.75rem;
+        @media (max-width: 500px) {
+            .add-form {
+                flex-direction: column;
             }
 
-            .stats {
-                flex-wrap: wrap;
+            .time-inputs {
+                width: 100%;
+                justify-content: center;
             }
 
-            .stat-card {
-                flex: 1;
-                min-width: 100px;
+            .task-input {
+                width: 100%;
+            }
+
+            .btn-add {
+                width: 100%;
+            }
+
+            .color-picker {
+                justify-content: center;
+                width: 100%;
             }
         }
     </style>
@@ -327,43 +330,38 @@
             </div>
         </header>
 
-        <div class="stats">
-            <div class="stat-card">
-                <div class="number" id="totalTasks">0</div>
-                <div class="label">Tasks</div>
-            </div>
-            <div class="stat-card">
-                <div class="number" id="completedTasks">0</div>
-                <div class="label">Completed</div>
+        <div class="add-section">
+            <h3>Add New Task</h3>
+            <div class="add-form">
+                <div class="time-inputs">
+                    <input type="time" id="startTime" value="09:00">
+                    <span>to</span>
+                    <input type="time" id="endTime" value="10:00">
+                </div>
+                <input type="text" class="task-input" id="taskInput" placeholder="What do you want to do?">
+                <div class="color-picker">
+                    <div class="color-dot color-purple selected" data-color="purple" onclick="selectColor('purple')"></div>
+                    <div class="color-dot color-blue" data-color="blue" onclick="selectColor('blue')"></div>
+                    <div class="color-dot color-green" data-color="green" onclick="selectColor('green')"></div>
+                    <div class="color-dot color-orange" data-color="orange" onclick="selectColor('orange')"></div>
+                    <div class="color-dot color-red" data-color="red" onclick="selectColor('red')"></div>
+                </div>
+                <button class="btn-add" onclick="addTask()">Add</button>
             </div>
         </div>
 
-        <div class="schedule" id="schedule"></div>
-    </div>
-
-    <!-- Add Task Modal -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
-            <h2>Add Task</h2>
-            <input type="text" id="taskInput" placeholder="What do you want to do?" autofocus>
-            <div class="color-options">
-                <div class="color-option color-purple selected" data-color="purple" onclick="selectColor('purple')"></div>
-                <div class="color-option color-blue" data-color="blue" onclick="selectColor('blue')"></div>
-                <div class="color-option color-green" data-color="green" onclick="selectColor('green')"></div>
-                <div class="color-option color-orange" data-color="orange" onclick="selectColor('orange')"></div>
-                <div class="color-option color-red" data-color="red" onclick="selectColor('red')"></div>
+        <div class="task-list">
+            <div class="task-list-header">
+                <h3>Today's Schedule</h3>
+                <span class="task-count" id="taskCount">0 tasks</span>
             </div>
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-                <button class="btn-save" onclick="saveTask()">Add Task</button>
-            </div>
+            <div class="tasks" id="taskContainer"></div>
         </div>
     </div>
 
     <script>
         // State
         let currentDate = new Date();
-        let selectedSlot = null;
         let selectedColor = 'purple';
 
         // Color gradients
@@ -384,7 +382,7 @@
         function loadData() {
             const key = getDateKey(currentDate);
             const data = localStorage.getItem('timeplanner_' + key);
-            return data ? JSON.parse(data) : {};
+            return data ? JSON.parse(data) : [];
         }
 
         // Save data to localStorage
@@ -399,12 +397,20 @@
             return date.toLocaleDateString('en-US', options);
         }
 
+        // Format time for display
+        function formatTime(time) {
+            const [hours, minutes] = time.split(':');
+            const h = parseInt(hours);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const hour12 = h % 12 || 12;
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+
         // Change date
         function changeDate(delta) {
             currentDate.setDate(currentDate.getDate() + delta);
-            renderSchedule();
             updateDateDisplay();
-            updateStats();
+            renderTasks();
         }
 
         // Update date display
@@ -412,152 +418,109 @@
             document.getElementById('currentDate').textContent = formatDate(currentDate);
         }
 
-        // Generate time slots
-        function generateTimeSlots() {
-            const slots = [];
-            for (let hour = 6; hour <= 23; hour++) {
-                const time = hour.toString().padStart(2, '0') + ':00';
-                const label = hour < 12 ? `${hour} AM` : (hour === 12 ? '12 PM' : `${hour - 12} PM`);
-                slots.push({ time, label });
-            }
-            return slots;
-        }
-
-        // Render schedule
-        function renderSchedule() {
-            const schedule = document.getElementById('schedule');
-            const slots = generateTimeSlots();
-            const data = loadData();
-
-            schedule.innerHTML = slots.map(slot => {
-                const tasks = data[slot.time] || [];
-                const tasksHtml = tasks.length > 0
-                    ? tasks.map((task, index) => `
-                        <div class="task ${task.completed ? 'completed' : ''}"
-                             style="background: ${colorGradients[task.color] || colorGradients.purple}"
-                             onclick="event.stopPropagation(); toggleTask('${slot.time}', ${index})">
-                            <span>${task.text}</span>
-                            <button class="delete-btn" onclick="event.stopPropagation(); deleteTask('${slot.time}', ${index})">×</button>
-                        </div>
-                    `).join('')
-                    : '<span class="add-placeholder">+ Click to add task</span>';
-
-                return `
-                    <div class="time-slot">
-                        <div class="time-label">${slot.label}</div>
-                        <div class="slot-content" onclick="openModal('${slot.time}')">${tasksHtml}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Open modal
-        function openModal(time) {
-            selectedSlot = time;
-            document.getElementById('modalOverlay').classList.add('active');
-            document.getElementById('taskInput').value = '';
-            document.getElementById('taskInput').focus();
-        }
-
-        // Close modal
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('active');
-            selectedSlot = null;
-        }
-
         // Select color
         function selectColor(color) {
             selectedColor = color;
-            document.querySelectorAll('.color-option').forEach(el => {
+            document.querySelectorAll('.color-dot').forEach(el => {
                 el.classList.toggle('selected', el.dataset.color === color);
             });
         }
 
-        // Save task
-        function saveTask() {
-            const input = document.getElementById('taskInput');
-            const text = input.value.trim();
+        // Add task
+        function addTask() {
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const taskText = document.getElementById('taskInput').value.trim();
 
-            if (text && selectedSlot) {
-                const data = loadData();
-                if (!data[selectedSlot]) {
-                    data[selectedSlot] = [];
-                }
-                data[selectedSlot].push({
-                    text,
-                    color: selectedColor,
-                    completed: false
-                });
-                saveData(data);
-                renderSchedule();
-                updateStats();
-                closeModal();
+            if (!taskText) {
+                document.getElementById('taskInput').focus();
+                return;
             }
+
+            const tasks = loadData();
+            tasks.push({
+                id: Date.now(),
+                startTime,
+                endTime,
+                text: taskText,
+                color: selectedColor,
+                completed: false
+            });
+
+            // Sort by start time
+            tasks.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+            saveData(tasks);
+            renderTasks();
+
+            // Clear input
+            document.getElementById('taskInput').value = '';
+            document.getElementById('taskInput').focus();
         }
 
         // Toggle task completion
-        function toggleTask(time, index) {
-            const data = loadData();
-            if (data[time] && data[time][index]) {
-                data[time][index].completed = !data[time][index].completed;
-                saveData(data);
-                renderSchedule();
-                updateStats();
+        function toggleTask(id) {
+            const tasks = loadData();
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveData(tasks);
+                renderTasks();
             }
         }
 
         // Delete task
-        function deleteTask(time, index) {
-            const data = loadData();
-            if (data[time]) {
-                data[time].splice(index, 1);
-                if (data[time].length === 0) {
-                    delete data[time];
-                }
-                saveData(data);
-                renderSchedule();
-                updateStats();
-            }
+        function deleteTask(id) {
+            let tasks = loadData();
+            tasks = tasks.filter(t => t.id !== id);
+            saveData(tasks);
+            renderTasks();
         }
 
-        // Update stats
-        function updateStats() {
-            const data = loadData();
-            let total = 0;
-            let completed = 0;
+        // Render tasks
+        function renderTasks() {
+            const container = document.getElementById('taskContainer');
+            const tasks = loadData();
 
-            Object.values(data).forEach(tasks => {
-                tasks.forEach(task => {
-                    total++;
-                    if (task.completed) completed++;
-                });
-            });
+            document.getElementById('taskCount').textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''}`;
 
-            document.getElementById('totalTasks').textContent = total;
-            document.getElementById('completedTasks').textContent = completed;
+            if (tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📅</div>
+                        <p>No tasks for this day</p>
+                        <p>Add your first task above!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = tasks.map(task => `
+                <div class="task-item ${task.completed ? 'completed' : ''}">
+                    <div class="task-color-bar" style="background: ${colorGradients[task.color]}"></div>
+                    <div class="task-time">
+                        ${formatTime(task.startTime)}
+                        <span class="end-time">- ${formatTime(task.endTime)}</span>
+                    </div>
+                    <div class="task-content">${task.text}</div>
+                    <div class="task-actions">
+                        <button class="btn-complete" onclick="toggleTask(${task.id})">✓</button>
+                        <button class="btn-delete" onclick="deleteTask(${task.id})">×</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-            if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('active')) {
-                saveTask();
-            }
-        });
-
-        // Click outside modal to close
-        document.getElementById('modalOverlay').addEventListener('click', (e) => {
-            if (e.target.id === 'modalOverlay') {
-                closeModal();
+        // Keyboard shortcut
+        document.getElementById('taskInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                addTask();
             }
         });
 
         // Initialize
         updateDateDisplay();
-        renderSchedule();
-        updateStats();
+        renderTasks();
     </script>
 </body>
 </html>
