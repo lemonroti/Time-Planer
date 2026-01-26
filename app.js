@@ -53,13 +53,12 @@ function formatTime(time) {
     return `${hour12}:${minutes} ${ampm}`;
 }
 
-// Calculate duration
+// Calculate duration (handles midnight crossing)
 function calcDuration(startTime, endTime) {
-    const [startH, startM] = startTime.split(':').map(Number);
-    const [endH, endM] = endTime.split(':').map(Number);
-    const startMins = startH * 60 + startM;
-    const endMins = endH * 60 + endM;
-    return (endMins - startMins) / 60;
+    const startMins = timeToMins(startTime);
+    const endMins = timeToMins(endTime);
+    const effectiveEnd = getEffectiveEnd(startMins, endMins);
+    return (effectiveEnd - startMins) / 60;
 }
 
 // Format duration
@@ -79,12 +78,22 @@ function timeToMins(time) {
     return h * 60 + m;
 }
 
-// Calculate total allocated hours
+// Get effective end time (handles midnight crossing)
+// If end < start, assume task crosses midnight and add 24 hours
+function getEffectiveEnd(startMins, endMins) {
+    return endMins <= startMins ? endMins + 1440 : endMins;
+}
+
+// Calculate total allocated hours (handles midnight crossing)
 function calcTotalAllocated(tasks) {
     if (tasks.length === 0) return 0;
 
     const intervals = tasks
-        .map(t => [timeToMins(t.startTime), timeToMins(t.endTime)])
+        .map(t => {
+            const s = timeToMins(t.startTime);
+            const e = timeToMins(t.endTime);
+            return [s, getEffectiveEnd(s, e)];
+        })
         .filter(([s, e]) => e > s)
         .sort((a, b) => a[0] - b[0]);
 
@@ -104,14 +113,14 @@ function calcTotalAllocated(tasks) {
     return merged.reduce((sum, [s, e]) => sum + (e - s), 0) / 60;
 }
 
-// Check if task is a sub-task
+// Check if task is a sub-task (handles midnight crossing)
 function isSubTask(task, allTasks) {
     const tStart = timeToMins(task.startTime);
-    const tEnd = timeToMins(task.endTime);
+    const tEnd = getEffectiveEnd(tStart, timeToMins(task.endTime));
     return allTasks.some(other => {
         if (other.id === task.id) return false;
         const oStart = timeToMins(other.startTime);
-        const oEnd = timeToMins(other.endTime);
+        const oEnd = getEffectiveEnd(oStart, timeToMins(other.endTime));
         return oStart <= tStart && oEnd >= tEnd && !(oStart === tStart && oEnd === tEnd);
     });
 }
@@ -359,10 +368,10 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Find parent task for a sub-task
+// Find parent task for a sub-task (handles midnight crossing)
 function findParentTask(task, allTasks) {
     const tStart = timeToMins(task.startTime);
-    const tEnd = timeToMins(task.endTime);
+    const tEnd = getEffectiveEnd(tStart, timeToMins(task.endTime));
 
     let parent = null;
     let parentDuration = Infinity;
@@ -370,7 +379,7 @@ function findParentTask(task, allTasks) {
     for (const other of allTasks) {
         if (other.id === task.id) continue;
         const oStart = timeToMins(other.startTime);
-        const oEnd = timeToMins(other.endTime);
+        const oEnd = getEffectiveEnd(oStart, timeToMins(other.endTime));
         const oDuration = oEnd - oStart;
 
         if (oStart <= tStart && oEnd >= tEnd && !(oStart === tStart && oEnd === tEnd)) {
@@ -455,7 +464,9 @@ function renderTasks() {
         const indent = level * 24;
 
         // Check for gap with previous parent task
-        if (!isSub && lastParentEndTime !== null) {
+        // Note: If previous task crossed midnight, lastParentEndTime > 1440
+        // In that case, no gap is shown since we're in "next day" territory
+        if (!isSub && lastParentEndTime !== null && lastParentEndTime <= 1440) {
             const gapMins = timeToMins(task.startTime) - lastParentEndTime;
             if (gapMins > 0) {
                 html += `
@@ -469,7 +480,9 @@ function renderTasks() {
         }
 
         if (!isSub) {
-            lastParentEndTime = timeToMins(task.endTime);
+            const taskStart = timeToMins(task.startTime);
+            const taskEnd = timeToMins(task.endTime);
+            lastParentEndTime = getEffectiveEnd(taskStart, taskEnd);
         }
 
         html += `
@@ -491,6 +504,31 @@ function renderTasks() {
             </div>
         `;
     }
+    // Show remaining free time until midnight after last parent task
+    // Don't show if task crossed midnight (lastParentEndTime > 1440)
+    if (lastParentEndTime !== null && lastParentEndTime < 1440) {
+        const remainingMins = 1440 - lastParentEndTime; // 1440 = 24 * 60 = midnight
+        if (remainingMins > 0) {
+            html += `
+                <div class="task-gap">
+                    <span class="gap-line"></span>
+                    <span class="gap-label">${formatDuration(remainingMins / 60)} free</span>
+                    <span class="gap-line"></span>
+                </div>
+            `;
+        }
+    } else if (lastParentEndTime !== null && lastParentEndTime > 1440) {
+        // Task crossed midnight - show how far into next day
+        const nextDayMins = lastParentEndTime - 1440;
+        html += `
+            <div class="task-gap">
+                <span class="gap-line"></span>
+                <span class="gap-label">ends ${formatTime(String(Math.floor(nextDayMins / 60)).padStart(2, '0') + ':' + String(nextDayMins % 60).padStart(2, '0'))} next day</span>
+                <span class="gap-line"></span>
+            </div>
+        `;
+    }
+
     container.innerHTML = html;
 
     updateHoursLeft();
