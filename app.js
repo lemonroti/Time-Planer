@@ -558,16 +558,16 @@ function getAllTasks() {
 
 function renderStats() {
     const container = document.getElementById('statsContainer');
-    const allTasks = getAllTasks();
+    const tasks = loadData(); // Only current template
 
-    if (allTasks.length === 0) {
+    if (tasks.length === 0) {
         container.innerHTML = '<div class="stats-empty">No tasks to analyze</div>';
         return;
     }
 
     // Group by task text (case-insensitive)
     const stats = {};
-    for (const task of allTasks) {
+    for (const task of tasks) {
         const name = task.text.toLowerCase().trim();
         if (!stats[name]) {
             stats[name] = {
