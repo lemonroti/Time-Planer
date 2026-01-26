@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Planner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .date-nav button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background 0.3s;
+        }
+
+        .date-nav button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .date-nav .current-date {
+            font-size: 1.1rem;
+            font-weight: 500;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .schedule {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .time-slot {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            min-height: 60px;
+            transition: background 0.2s;
+        }
+
+        .time-slot:last-child {
+            border-bottom: none;
+        }
+
+        .time-slot:hover {
+            background: #f8f9ff;
+        }
+
+        .time-label {
+            width: 80px;
+            padding: 15px;
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+            border-right: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .slot-content {
+            flex: 1;
+            padding: 10px 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: flex-start;
+            cursor: pointer;
+        }
+
+        .task {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .task.completed {
+            background: #a0a0a0;
+            text-decoration: line-through;
+        }
+
+        .task .delete-btn {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .task .delete-btn:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .add-placeholder {
+            color: #aaa;
+            font-size: 0.9rem;
+            padding: 8px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .modal input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .modal-buttons button:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-cancel {
+            background: #eee;
+            color: #666;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-save:hover {
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Quick Stats */
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.2);
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .stat-card .label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* Color options for tasks */
+        .color-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.2s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: #333;
+        }
+
+        .color-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .color-blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .color-green { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .color-orange { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .color-red { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .time-label {
+                width: 60px;
+                font-size: 0.75rem;
+            }
+
+            .stats {
+                flex-wrap: wrap;
+            }
+
+            .stat-card {
+                flex: 1;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Time Planner</h1>
+            <div class="date-nav">
+                <button onclick="changeDate(-1)">&lt;</button>
+                <span class="current-date" id="currentDate"></span>
+                <button onclick="changeDate(1)">&gt;</button>
+            </div>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="number" id="totalTasks">0</div>
+                <div class="label">Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="completedTasks">0</div>
+                <div class="label">Completed</div>
+            </div>
+        </div>
+
+        <div class="schedule" id="schedule"></div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2>Add Task</h2>
+            <input type="text" id="taskInput" placeholder="What do you want to do?" autofocus>
+            <div class="color-options">
+                <div class="color-option color-purple selected" data-color="purple" onclick="selectColor('purple')"></div>
+                <div class="color-option color-blue" data-color="blue" onclick="selectColor('blue')"></div>
+                <div class="color-option color-green" data-color="green" onclick="selectColor('green')"></div>
+                <div class="color-option color-orange" data-color="orange" onclick="selectColor('orange')"></div>
+                <div class="color-option color-red" data-color="red" onclick="selectColor('red')"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-save" onclick="saveTask()">Add Task</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentDate = new Date();
+        let selectedSlot = null;
+        let selectedColor = 'purple';
+
+        // Color gradients
+        const colorGradients = {
+            purple: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            blue: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            green: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+            orange: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            red: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+        };
+
+        // Get date key for storage
+        function getDateKey(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // Load data from localStorage
+        function loadData() {
+            const key = getDateKey(currentDate);
+            const data = localStorage.getItem('timeplanner_' + key);
+            return data ? JSON.parse(data) : {};
+        }
+
+        // Save data to localStorage
+        function saveData(data) {
+            const key = getDateKey(currentDate);
+            localStorage.setItem('timeplanner_' + key, JSON.stringify(data));
+        }
+
+        // Format date for display
+        function formatDate(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // Change date
+        function changeDate(delta) {
+            currentDate.setDate(currentDate.getDate() + delta);
+            renderSchedule();
+            updateDateDisplay();
+            updateStats();
+        }
+
+        // Update date display
+        function updateDateDisplay() {
+            document.getElementById('currentDate').textContent = formatDate(currentDate);
+        }
+
+        // Generate time slots
+        function generateTimeSlots() {
+            const slots = [];
+            for (let hour = 6; hour <= 23; hour++) {
+                const time = hour.toString().padStart(2, '0') + ':00';
+                const label = hour < 12 ? `${hour} AM` : (hour === 12 ? '12 PM' : `${hour - 12} PM`);
+                slots.push({ time, label });
+            }
+            return slots;
+        }
+
+        // Render schedule
+        function renderSchedule() {
+            const schedule = document.getElementById('schedule');
+            const slots = generateTimeSlots();
+            const data = loadData();
+
+            schedule.innerHTML = slots.map(slot => {
+                const tasks = data[slot.time] || [];
+                const tasksHtml = tasks.length > 0
+                    ? tasks.map((task, index) => `
+                        <div class="task ${task.completed ? 'completed' : ''}"
+                             style="background: ${colorGradients[task.color] || colorGradients.purple}"
+                             onclick="event.stopPropagation(); toggleTask('${slot.time}', ${index})">
+                            <span>${task.text}</span>
+                            <button class="delete-btn" onclick="event.stopPropagation(); deleteTask('${slot.time}', ${index})">×</button>
+                        </div>
+                    `).join('')
+                    : '<span class="add-placeholder">+ Click to add task</span>';
+
+                return `
+                    <div class="time-slot">
+                        <div class="time-label">${slot.label}</div>
+                        <div class="slot-content" onclick="openModal('${slot.time}')">${tasksHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Open modal
+        function openModal(time) {
+            selectedSlot = time;
+            document.getElementById('modalOverlay').classList.add('active');
+            document.getElementById('taskInput').value = '';
+            document.getElementById('taskInput').focus();
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            selectedSlot = null;
+        }
+
+        // Select color
+        function selectColor(color) {
+            selectedColor = color;
+            document.querySelectorAll('.color-option').forEach(el => {
+                el.classList.toggle('selected', el.dataset.color === color);
+            });
+        }
+
+        // Save task
+        function saveTask() {
+            const input = document.getElementById('taskInput');
+            const text = input.value.trim();
+
+            if (text && selectedSlot) {
+                const data = loadData();
+                if (!data[selectedSlot]) {
+                    data[selectedSlot] = [];
+                }
+                data[selectedSlot].push({
+                    text,
+                    color: selectedColor,
+                    completed: false
+                });
+                saveData(data);
+                renderSchedule();
+                updateStats();
+                closeModal();
+            }
+        }
+
+        // Toggle task completion
+        function toggleTask(time, index) {
+            const data = loadData();
+            if (data[time] && data[time][index]) {
+                data[time][index].completed = !data[time][index].completed;
+                saveData(data);
+                renderSchedule();
+                updateStats();
+            }
+        }
+
+        // Delete task
+        function deleteTask(time, index) {
+            const data = loadData();
+            if (data[time]) {
+                data[time].splice(index, 1);
+                if (data[time].length === 0) {
+                    delete data[time];
+                }
+                saveData(data);
+                renderSchedule();
+                updateStats();
+            }
+        }
+
+        // Update stats
+        function updateStats() {
+            const data = loadData();
+            let total = 0;
+            let completed = 0;
+
+            Object.values(data).forEach(tasks => {
+                tasks.forEach(task => {
+                    total++;
+                    if (task.completed) completed++;
+                });
+            });
+
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+            if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('active')) {
+                saveTask();
+            }
+        });
+
+        // Click outside modal to close
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'modalOverlay') {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        updateDateDisplay();
+        renderSchedule();
+        updateStats();
+    </script>
+</body>
+</html>
