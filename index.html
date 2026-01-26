@@ -63,10 +63,13 @@
                             <button class="color-btn" data-color="sand" onclick="selectColor('sand')"></button>
                             <button class="color-btn" data-color="slate" onclick="selectColor('slate')"></button>
                         </div>
-                        <button class="add-btn" onclick="addTask()">
-                            Add
-                            <span class="add-icon">+</span>
-                        </button>
+                        <div class="add-footer-buttons">
+                            <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+                            <button class="add-btn" id="addBtn" onclick="saveTask()">
+                                <span id="btnText">Add</span>
+                                <span class="add-icon" id="btnIcon">+</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>

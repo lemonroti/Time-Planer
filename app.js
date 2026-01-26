@@ -1,6 +1,7 @@
 // State
 let currentDate = new Date();
 let selectedColor = 'coral';
+let editingTaskId = null;
 
 // Color values
 const colors = {
@@ -151,8 +152,8 @@ function selectColor(color) {
     });
 }
 
-// Add task
-function addTask() {
+// Save task (add or update)
+function saveTask() {
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
     const taskText = document.getElementById('taskInput').value.trim();
@@ -163,14 +164,28 @@ function addTask() {
     }
 
     const tasks = loadData();
-    tasks.push({
-        id: Date.now(),
-        startTime,
-        endTime,
-        text: taskText,
-        color: selectedColor,
-        completed: false
-    });
+
+    if (editingTaskId) {
+        // Update existing task
+        const task = tasks.find(t => t.id === editingTaskId);
+        if (task) {
+            task.startTime = startTime;
+            task.endTime = endTime;
+            task.text = taskText;
+            task.color = selectedColor;
+        }
+        cancelEdit();
+    } else {
+        // Add new task
+        tasks.push({
+            id: Date.now(),
+            startTime,
+            endTime,
+            text: taskText,
+            color: selectedColor,
+            completed: false
+        });
+    }
 
     tasks.sort((a, b) => a.startTime.localeCompare(b.startTime));
 
@@ -179,6 +194,50 @@ function addTask() {
 
     document.getElementById('taskInput').value = '';
     document.getElementById('taskInput').focus();
+}
+
+// Edit task
+function editTask(id) {
+    const tasks = loadData();
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    editingTaskId = id;
+
+    // Fill form with task data
+    document.getElementById('startTime').value = task.startTime;
+    document.getElementById('endTime').value = task.endTime;
+    document.getElementById('taskInput').value = task.text;
+    selectColor(task.color);
+
+    // Update UI to show edit mode
+    document.getElementById('btnText').textContent = 'Update';
+    document.getElementById('btnIcon').textContent = '✓';
+    document.getElementById('addBtn').classList.add('editing');
+    document.querySelector('.cancel-btn').classList.add('visible');
+    document.querySelector('.section-title').textContent = 'Edit Task';
+
+    // Scroll to form and focus
+    document.querySelector('.add-card').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('taskInput').focus();
+}
+
+// Cancel edit
+function cancelEdit() {
+    editingTaskId = null;
+
+    // Reset form
+    document.getElementById('startTime').value = '09:00';
+    document.getElementById('endTime').value = '10:00';
+    document.getElementById('taskInput').value = '';
+    selectColor('coral');
+
+    // Update UI back to add mode
+    document.getElementById('btnText').textContent = 'Add';
+    document.getElementById('btnIcon').textContent = '+';
+    document.getElementById('addBtn').classList.remove('editing');
+    document.querySelector('.cancel-btn').classList.remove('visible');
+    document.querySelector('.section-title').textContent = 'Add Task';
 }
 
 // Toggle task completion
@@ -244,6 +303,7 @@ function renderTasks() {
                 </div>
                 <div class="task-actions">
                     <button class="task-btn complete-btn" onclick="toggleTask(${task.id})">✓</button>
+                    <button class="task-btn edit-btn" onclick="editTask(${task.id})">✎</button>
                     <button class="task-btn delete-btn" onclick="deleteTask(${task.id})">×</button>
                 </div>
             </div>
@@ -256,7 +316,8 @@ function renderTasks() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('taskInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter') addTask();
+        if (e.key === 'Enter') saveTask();
+        if (e.key === 'Escape') cancelEdit();
     });
 
     updateDateDisplay();

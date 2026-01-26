@@ -285,6 +285,12 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--space-sm);
+}
+
+.add-footer-buttons {
+    display: flex;
+    gap: var(--space-sm);
 }
 
 /* Color options */
@@ -344,9 +350,40 @@ header {
     transform: translateY(0);
 }
 
+.add-btn.editing {
+    background: var(--sky);
+}
+
+.add-btn.editing:hover {
+    background: #4a8ac4;
+}
+
 .add-icon {
     font-size: 1.1rem;
     font-weight: 400;
+}
+
+/* Cancel button */
+.cancel-btn {
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: none;
+}
+
+.cancel-btn.visible {
+    display: block;
+}
+
+.cancel-btn:hover {
+    border-color: var(--text-secondary);
+    color: var(--text);
 }
 
 /* ========================================
@@ -428,8 +465,8 @@ header {
 
 .task-duration {
     font-size: 0.7rem;
-    color: var(--text-muted);
-    background: var(--bg-input);
+    color: white;
+    background: #1a1a1a;
     padding: 2px 6px;
     border-radius: 4px;
 }
@@ -493,6 +530,12 @@ header {
     color: white;
 }
 
+.task-btn.edit-btn:hover {
+    background: var(--sky);
+    border-color: var(--sky);
+    color: white;
+}
+
 .task-btn.delete-btn:hover {
     background: var(--coral);
     border-color: var(--coral);
@@ -551,9 +594,19 @@ header {
         gap: var(--space-md);
     }
 
-    .add-btn {
+    .add-footer-buttons {
         width: 100%;
+        display: flex;
+        gap: var(--space-sm);
+    }
+
+    .add-btn {
+        flex: 1;
         justify-content: center;
+    }
+
+    .cancel-btn {
+        flex: 0 0 auto;
     }
 
     .color-options {
