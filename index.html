@@ -74,9 +74,24 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
 
-        .add-section h3 {
+        .add-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
+        }
+
+        .add-section h3 {
             color: #333;
+        }
+
+        .hours-left {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
 
         .add-form {
@@ -225,6 +240,16 @@
             color: #999;
         }
 
+        .task-duration {
+            background: #f0f0f0;
+            color: #666;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
         .task-color-bar {
             width: 4px;
             height: 40px;
@@ -331,7 +356,10 @@
         </header>
 
         <div class="add-section">
-            <h3>Add New Task</h3>
+            <div class="add-section-header">
+                <h3>Add New Task</h3>
+                <span class="hours-left" id="hoursLeft">24 hrs left</span>
+            </div>
             <div class="add-form">
                 <div class="time-inputs">
                     <input type="time" id="startTime" value="09:00">
@@ -404,6 +432,41 @@
             const ampm = h >= 12 ? 'PM' : 'AM';
             const hour12 = h % 12 || 12;
             return `${hour12}:${minutes} ${ampm}`;
+        }
+
+        // Calculate duration in hours between two times
+        function calcDuration(startTime, endTime) {
+            const [startH, startM] = startTime.split(':').map(Number);
+            const [endH, endM] = endTime.split(':').map(Number);
+            const startMins = startH * 60 + startM;
+            const endMins = endH * 60 + endM;
+            const diffMins = endMins - startMins;
+            return diffMins / 60;
+        }
+
+        // Format duration for display
+        function formatDuration(hours) {
+            if (hours <= 0) return '0 hrs';
+            if (hours < 1) return `${Math.round(hours * 60)} min`;
+            if (hours === 1) return '1 hr';
+            if (Number.isInteger(hours)) return `${hours} hrs`;
+            return `${hours.toFixed(1)} hrs`;
+        }
+
+        // Calculate total allocated hours
+        function calcTotalAllocated(tasks) {
+            return tasks.reduce((total, task) => {
+                const dur = calcDuration(task.startTime, task.endTime);
+                return total + (dur > 0 ? dur : 0);
+            }, 0);
+        }
+
+        // Update hours left display
+        function updateHoursLeft() {
+            const tasks = loadData();
+            const allocated = calcTotalAllocated(tasks);
+            const left = 24 - allocated;
+            document.getElementById('hoursLeft').textContent = `${formatDuration(left > 0 ? left : 0)} left`;
         }
 
         // Change date
@@ -492,10 +555,13 @@
                         <p>Add your first task above!</p>
                     </div>
                 `;
+                updateHoursLeft();
                 return;
             }
 
-            container.innerHTML = tasks.map(task => `
+            container.innerHTML = tasks.map(task => {
+                const duration = calcDuration(task.startTime, task.endTime);
+                return `
                 <div class="task-item ${task.completed ? 'completed' : ''}">
                     <div class="task-color-bar" style="background: ${colorGradients[task.color]}"></div>
                     <div class="task-time">
@@ -503,12 +569,15 @@
                         <span class="end-time">- ${formatTime(task.endTime)}</span>
                     </div>
                     <div class="task-content">${task.text}</div>
+                    <span class="task-duration">${formatDuration(duration)}</span>
                     <div class="task-actions">
                         <button class="btn-complete" onclick="toggleTask(${task.id})">✓</button>
                         <button class="btn-delete" onclick="deleteTask(${task.id})">×</button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
+
+            updateHoursLeft();
         }
 
         // Keyboard shortcut
@@ -521,6 +590,7 @@
         // Initialize
         updateDateDisplay();
         renderTasks();
+        updateHoursLeft();
     </script>
 </body>
 </html>
