@@ -678,7 +678,6 @@ header {
 
 /* Sub-task indicator */
 .task-item.sub-task {
-    margin-left: var(--space-lg);
     border-left: 2px solid var(--border);
 }
 

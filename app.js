@@ -359,6 +359,69 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Find parent task for a sub-task
+function findParentTask(task, allTasks) {
+    const tStart = timeToMins(task.startTime);
+    const tEnd = timeToMins(task.endTime);
+
+    let parent = null;
+    let parentDuration = Infinity;
+
+    for (const other of allTasks) {
+        if (other.id === task.id) continue;
+        const oStart = timeToMins(other.startTime);
+        const oEnd = timeToMins(other.endTime);
+        const oDuration = oEnd - oStart;
+
+        if (oStart <= tStart && oEnd >= tEnd && !(oStart === tStart && oEnd === tEnd)) {
+            if (oDuration < parentDuration) {
+                parent = other;
+                parentDuration = oDuration;
+            }
+        }
+    }
+    return parent;
+}
+
+// Sort tasks with sub-tasks under their parents (supports nested levels)
+function sortTasksWithHierarchy(tasks) {
+    // Build parent-child map
+    const childrenOf = {};
+    const topLevel = [];
+
+    for (const task of tasks) {
+        const parent = findParentTask(task, tasks);
+        if (parent) {
+            if (!childrenOf[parent.id]) {
+                childrenOf[parent.id] = [];
+            }
+            childrenOf[parent.id].push(task);
+        } else {
+            topLevel.push(task);
+        }
+    }
+
+    // Sort top level by start time
+    topLevel.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    // Recursively add task and its children with nesting level
+    function addWithChildren(task, result, level) {
+        result.push({ task, level });
+        const children = childrenOf[task.id] || [];
+        children.sort((a, b) => a.startTime.localeCompare(b.startTime));
+        for (const child of children) {
+            addWithChildren(child, result, level + 1);
+        }
+    }
+
+    const result = [];
+    for (const task of topLevel) {
+        addWithChildren(task, result, 0);
+    }
+
+    return result;
+}
+
 // Render tasks
 function renderTasks() {
     const container = document.getElementById('taskContainer');
@@ -375,35 +438,42 @@ function renderTasks() {
             </div>
         `;
         updateHoursLeft();
+        renderStats();
         return;
     }
 
-    let html = '';
-    for (let i = 0; i < tasks.length; i++) {
-        const task = tasks[i];
-        const duration = calcDuration(task.startTime, task.endTime);
-        const isSub = isSubTask(task, tasks);
-        const color = colors[task.color] || colors.coral;
+    const sortedTasks = sortTasksWithHierarchy(tasks);
 
-        // Check for gap with previous non-sub task
-        if (i > 0 && !isSub) {
-            const prevTask = tasks.slice(0, i).reverse().find(t => !isSubTask(t, tasks));
-            if (prevTask) {
-                const gapMins = timeToMins(task.startTime) - timeToMins(prevTask.endTime);
-                if (gapMins > 0) {
-                    html += `
-                        <div class="task-gap">
-                            <span class="gap-line"></span>
-                            <span class="gap-label">${formatDuration(gapMins / 60)} free</span>
-                            <span class="gap-line"></span>
-                        </div>
-                    `;
-                }
+    let html = '';
+    let lastParentEndTime = null;
+
+    for (let i = 0; i < sortedTasks.length; i++) {
+        const { task, level } = sortedTasks[i];
+        const duration = calcDuration(task.startTime, task.endTime);
+        const isSub = level > 0;
+        const color = colors[task.color] || colors.coral;
+        const indent = level * 24;
+
+        // Check for gap with previous parent task
+        if (!isSub && lastParentEndTime !== null) {
+            const gapMins = timeToMins(task.startTime) - lastParentEndTime;
+            if (gapMins > 0) {
+                html += `
+                    <div class="task-gap">
+                        <span class="gap-line"></span>
+                        <span class="gap-label">${formatDuration(gapMins / 60)} free</span>
+                        <span class="gap-line"></span>
+                    </div>
+                `;
             }
         }
 
+        if (!isSub) {
+            lastParentEndTime = timeToMins(task.endTime);
+        }
+
         html += `
-            <div class="task-item ${task.completed ? 'completed' : ''} ${isSub ? 'sub-task' : ''}" style="animation-delay: ${i * 0.05}s">
+            <div class="task-item ${task.completed ? 'completed' : ''} ${isSub ? 'sub-task' : ''}" style="animation-delay: ${i * 0.05}s; margin-left: ${indent}px;">
                 <div class="task-color" style="background: ${color}"></div>
                 <div class="task-body">
                     <div class="task-time">
