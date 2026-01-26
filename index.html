@@ -214,10 +214,9 @@
 
         .task-item {
             display: flex;
-            align-items: center;
             padding: 15px 20px;
             border-bottom: 1px solid #eee;
-            gap: 15px;
+            gap: 12px;
             transition: background 0.2s;
         }
 
@@ -229,10 +228,28 @@
             background: #f8f9ff;
         }
 
+        .task-color-bar {
+            width: 4px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .task-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .task-time-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .task-time {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #666;
-            min-width: 110px;
             font-weight: 500;
         }
 
@@ -243,23 +260,17 @@
         .task-duration {
             background: #f0f0f0;
             color: #666;
-            padding: 3px 8px;
+            padding: 2px 8px;
             border-radius: 10px;
             font-size: 0.75rem;
             font-weight: 500;
-            white-space: nowrap;
-        }
-
-        .task-color-bar {
-            width: 4px;
-            height: 40px;
-            border-radius: 2px;
         }
 
         .task-content {
-            flex: 1;
             font-size: 1rem;
             color: #333;
+            line-height: 1.4;
+            word-break: break-word;
         }
 
         .task-item.completed .task-content {
@@ -564,12 +575,16 @@
                 return `
                 <div class="task-item ${task.completed ? 'completed' : ''}">
                     <div class="task-color-bar" style="background: ${colorGradients[task.color]}"></div>
-                    <div class="task-time">
-                        ${formatTime(task.startTime)}
-                        <span class="end-time">- ${formatTime(task.endTime)}</span>
+                    <div class="task-main">
+                        <div class="task-time-row">
+                            <div class="task-time">
+                                ${formatTime(task.startTime)}
+                                <span class="end-time">- ${formatTime(task.endTime)}</span>
+                            </div>
+                            <span class="task-duration">${formatDuration(duration)}</span>
+                        </div>
+                        <div class="task-content">${task.text}</div>
                     </div>
-                    <div class="task-content">${task.text}</div>
-                    <span class="task-duration">${formatDuration(duration)}</span>
                     <div class="task-actions">
                         <button class="btn-complete" onclick="toggleTask(${task.id})">✓</button>
                         <button class="btn-delete" onclick="deleteTask(${task.id})">×</button>
