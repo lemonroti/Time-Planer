@@ -303,8 +303,8 @@ function renderTasks() {
                 </div>
                 <div class="task-actions">
                     <button class="task-btn complete-btn" onclick="toggleTask(${task.id})">✓</button>
-                    <button class="task-btn edit-btn" onclick="editTask(${task.id})">✎</button>
                     <button class="task-btn delete-btn" onclick="deleteTask(${task.id})">×</button>
+                    <button class="task-btn edit-btn" onclick="editTask(${task.id})">✎</button>
                 </div>
             </div>
         `;
