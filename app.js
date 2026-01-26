@@ -424,6 +424,67 @@ function renderTasks() {
     container.innerHTML = html;
 
     updateHoursLeft();
+    renderStats();
+}
+
+// Statistics functions
+function toggleStats() {
+    document.querySelector('.stats-section').classList.toggle('collapsed');
+}
+
+function getAllTasks() {
+    const allTasks = [];
+    for (const name of templates) {
+        const key = getTemplateKey(name);
+        try {
+            const tasks = JSON.parse(localStorage.getItem(key));
+            if (Array.isArray(tasks)) {
+                allTasks.push(...tasks);
+            }
+        } catch (e) {
+            // Skip invalid data
+        }
+    }
+    return allTasks;
+}
+
+function renderStats() {
+    const container = document.getElementById('statsContainer');
+    const allTasks = getAllTasks();
+
+    if (allTasks.length === 0) {
+        container.innerHTML = '<div class="stats-empty">No tasks to analyze</div>';
+        return;
+    }
+
+    // Group by task text (case-insensitive)
+    const stats = {};
+    for (const task of allTasks) {
+        const name = task.text.toLowerCase().trim();
+        if (!stats[name]) {
+            stats[name] = {
+                displayName: task.text,
+                count: 0,
+                totalMins: 0
+            };
+        }
+        stats[name].count++;
+        const duration = calcDuration(task.startTime, task.endTime);
+        stats[name].totalMins += duration * 60;
+    }
+
+    // Sort by total time descending
+    const sorted = Object.values(stats).sort((a, b) => b.totalMins - a.totalMins);
+
+    container.innerHTML = sorted.map(stat => `
+        <div class="stat-item">
+            <div class="stat-info">
+                <span class="stat-name">${escapeHtml(stat.displayName)}</span>
+                <span class="stat-count">${stat.count} ${stat.count === 1 ? 'task' : 'tasks'}</span>
+            </div>
+            <span class="stat-time">${formatDuration(stat.totalMins / 60)}</span>
+        </div>
+    `).join('');
 }
 
 // Export all data to JSON file
