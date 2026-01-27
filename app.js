@@ -1,3 +1,217 @@
+// Supabase Setup
+const SUPABASE_URL = 'https://qwzejtfuvgrnzobvvpne.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_EWnDMnM-lgpBVMzB8dk0Aw_goA23tRu';
+let supabase = null;
+let currentUser = null;
+
+// Initialize Supabase
+function initSupabase() {
+    if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabase.auth.onAuthStateChange((event, session) => {
+            currentUser = session?.user || null;
+            updateAuthUI();
+            if (currentUser) {
+                syncFromCloud();
+            }
+        });
+        // Check current session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            currentUser = session?.user || null;
+            updateAuthUI();
+            if (currentUser) {
+                syncFromCloud();
+            }
+        });
+    }
+}
+
+// Auth UI functions
+function toggleAuthModal() {
+    const modal = document.getElementById('authModal');
+    const overlay = document.getElementById('authOverlay');
+    modal.classList.toggle('visible');
+    overlay.classList.toggle('visible');
+}
+
+function hideAuthModal() {
+    document.getElementById('authModal').classList.remove('visible');
+    document.getElementById('authOverlay').classList.remove('visible');
+}
+
+function updateAuthUI() {
+    const authBtn = document.getElementById('authBtn');
+    const loggedOut = document.getElementById('authLoggedOut');
+    const loggedIn = document.getElementById('authLoggedIn');
+    const authUser = document.getElementById('authUser');
+    const syncStatus = document.getElementById('syncStatus');
+
+    if (currentUser) {
+        authBtn.classList.add('logged-in');
+        authBtn.title = 'Synced: ' + currentUser.email;
+        loggedOut.style.display = 'none';
+        loggedIn.style.display = 'block';
+        authUser.textContent = currentUser.email;
+        syncStatus.textContent = '●';
+        syncStatus.className = 'sync-status synced';
+    } else {
+        authBtn.classList.remove('logged-in');
+        authBtn.title = 'Sign in to sync';
+        loggedOut.style.display = 'block';
+        loggedIn.style.display = 'none';
+        syncStatus.textContent = '';
+        syncStatus.className = 'sync-status';
+    }
+}
+
+function showAuthError(msg) {
+    let errEl = document.querySelector('.auth-error');
+    if (!errEl) {
+        errEl = document.createElement('p');
+        errEl.className = 'auth-error';
+        document.getElementById('authBody').appendChild(errEl);
+    }
+    errEl.textContent = msg;
+    setTimeout(() => errEl.remove(), 3000);
+}
+
+async function signInWithEmail() {
+    if (!supabase) return showAuthError('Supabase not loaded');
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    if (!email || !password) return showAuthError('Enter email and password');
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+        showAuthError(error.message);
+    } else {
+        hideAuthModal();
+    }
+}
+
+async function signUpWithEmail() {
+    if (!supabase) return showAuthError('Supabase not loaded');
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    if (!email || !password) return showAuthError('Enter email and password');
+    if (password.length < 6) return showAuthError('Password must be 6+ chars');
+
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+        showAuthError(error.message);
+    } else {
+        showAuthError('Check your email to confirm!');
+    }
+}
+
+async function signOut() {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    hideAuthModal();
+}
+
+// Sync functions
+function setSyncStatus(status) {
+    const el = document.getElementById('syncStatus');
+    if (status === 'syncing') {
+        el.textContent = '↻';
+        el.className = 'sync-status syncing';
+    } else if (status === 'synced') {
+        el.textContent = '●';
+        el.className = 'sync-status synced';
+    } else if (status === 'error') {
+        el.textContent = '!';
+        el.className = 'sync-status error';
+    }
+}
+
+async function syncToCloud() {
+    if (!supabase || !currentUser) return;
+
+    setSyncStatus('syncing');
+    try {
+        const allData = {
+            templates: templates,
+            current: currentTemplate,
+            schedules: {}
+        };
+
+        for (const name of templates) {
+            const key = getTemplateKey(name);
+            try {
+                const tasks = JSON.parse(localStorage.getItem(key));
+                if (Array.isArray(tasks)) {
+                    allData.schedules[name] = tasks;
+                }
+            } catch (e) {}
+        }
+
+        const { error } = await supabase
+            .from('user_data')
+            .upsert({
+                user_id: currentUser.id,
+                data: allData,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' });
+
+        if (error) throw error;
+        setSyncStatus('synced');
+    } catch (e) {
+        console.error('Sync to cloud failed:', e);
+        setSyncStatus('error');
+    }
+}
+
+async function syncFromCloud() {
+    if (!supabase || !currentUser) return;
+
+    setSyncStatus('syncing');
+    try {
+        const { data, error } = await supabase
+            .from('user_data')
+            .select('data')
+            .eq('user_id', currentUser.id)
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
+
+        if (data?.data) {
+            const cloudData = data.data;
+
+            // Merge: cloud wins for now (simple strategy)
+            if (cloudData.templates && cloudData.schedules) {
+                templates = cloudData.templates;
+                saveTemplates();
+
+                for (const [name, tasks] of Object.entries(cloudData.schedules)) {
+                    if (Array.isArray(tasks)) {
+                        localStorage.setItem(getTemplateKey(name), JSON.stringify(tasks));
+                    }
+                }
+
+                if (cloudData.current && templates.includes(cloudData.current)) {
+                    currentTemplate = cloudData.current;
+                    localStorage.setItem('timetable_current', currentTemplate);
+                    document.getElementById('templateName').textContent = currentTemplate;
+                }
+
+                renderTasks();
+            }
+        } else {
+            // No cloud data, push local to cloud
+            await syncToCloud();
+        }
+        setSyncStatus('synced');
+    } catch (e) {
+        console.error('Sync from cloud failed:', e);
+        setSyncStatus('error');
+    }
+}
+
+async function syncNow() {
+    await syncToCloud();
+}
+
 // State
 let currentTemplate = '';
 let templates = [];
@@ -22,6 +236,7 @@ function loadTemplates() {
 // Save templates list
 function saveTemplates() {
     localStorage.setItem('timetable_templates', JSON.stringify(templates));
+    debouncedSync();
 }
 
 // Get storage key for template
@@ -42,6 +257,17 @@ function saveData(data) {
     if (!currentTemplate) return;
     const key = getTemplateKey(currentTemplate);
     localStorage.setItem(key, JSON.stringify(data));
+    // Sync to cloud (debounced)
+    debouncedSync();
+}
+
+// Debounce sync to avoid too many calls
+let syncTimeout = null;
+function debouncedSync() {
+    if (syncTimeout) clearTimeout(syncTimeout);
+    syncTimeout = setTimeout(() => {
+        syncToCloud();
+    }, 1000);
 }
 
 // Format time for display
@@ -673,6 +899,9 @@ function importData(event) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Supabase
+    initSupabase();
+
     // Load templates
     templates = loadTemplates();
 

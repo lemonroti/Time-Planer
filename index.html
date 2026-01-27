@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="app">
@@ -20,6 +21,10 @@
                 <button class="icon-btn" onclick="exportData()" title="Export">↓</button>
                 <button class="icon-btn" onclick="document.getElementById('importFile').click()" title="Import">↑</button>
                 <input type="file" id="importFile" accept=".json" onchange="importData(event)" hidden>
+                <div class="auth-section">
+                    <button class="icon-btn auth-btn" id="authBtn" onclick="toggleAuthModal()" title="Sign in to sync">⚡</button>
+                    <span class="sync-status" id="syncStatus"></span>
+                </div>
             </div>
             <div class="hours-badge" id="hoursLeft">
                 <span class="hours-num">24</span>
@@ -111,6 +116,31 @@
             </section>
         </main>
     </div>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-card">
+            <div class="auth-header">
+                <span>Sync Across Devices</span>
+                <button class="menu-close-btn" onclick="hideAuthModal()">×</button>
+            </div>
+            <div class="auth-body" id="authBody">
+                <div class="auth-logged-out" id="authLoggedOut">
+                    <p class="auth-desc">Sign in to sync your schedules across all your devices.</p>
+                    <input type="email" id="authEmail" placeholder="Email" class="auth-input">
+                    <input type="password" id="authPassword" placeholder="Password" class="auth-input">
+                    <button class="auth-submit-btn" onclick="signInWithEmail()">Sign In</button>
+                    <button class="auth-link-btn" onclick="signUpWithEmail()">Create Account</button>
+                </div>
+                <div class="auth-logged-in" id="authLoggedIn" style="display:none;">
+                    <p class="auth-user" id="authUser"></p>
+                    <button class="auth-submit-btn" onclick="syncNow()">Sync Now</button>
+                    <button class="auth-link-btn auth-signout" onclick="signOut()">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="auth-overlay" id="authOverlay" onclick="hideAuthModal()"></div>
 
     <script src="app.js"></script>
 </body>
