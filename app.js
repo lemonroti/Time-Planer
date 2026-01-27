@@ -1,14 +1,14 @@
 // Supabase Setup
 const SUPABASE_URL = 'https://qwzejtfuvgrnzobvvpne.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_EWnDMnM-lgpBVMzB8dk0Aw_goA23tRu';
-let supabase = null;
+let supabaseClient = null;
 let currentUser = null;
 
 // Initialize Supabase
 function initSupabase() {
     if (window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        supabase.auth.onAuthStateChange((event, session) => {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient.auth.onAuthStateChange((event, session) => {
             currentUser = session?.user || null;
             updateAuthUI();
             if (currentUser) {
@@ -16,7 +16,7 @@ function initSupabase() {
             }
         });
         // Check current session
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
             currentUser = session?.user || null;
             updateAuthUI();
             if (currentUser) {
@@ -76,12 +76,12 @@ function showAuthError(msg) {
 }
 
 async function signInWithEmail() {
-    if (!supabase) return showAuthError('Supabase not loaded');
+    if (!supabaseClient) return showAuthError('Supabase not loaded');
     const email = document.getElementById('authEmail').value.trim();
     const password = document.getElementById('authPassword').value;
     if (!email || !password) return showAuthError('Enter email and password');
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
         showAuthError(error.message);
     } else {
@@ -90,13 +90,13 @@ async function signInWithEmail() {
 }
 
 async function signUpWithEmail() {
-    if (!supabase) return showAuthError('Supabase not loaded');
+    if (!supabaseClient) return showAuthError('Supabase not loaded');
     const email = document.getElementById('authEmail').value.trim();
     const password = document.getElementById('authPassword').value;
     if (!email || !password) return showAuthError('Enter email and password');
     if (password.length < 6) return showAuthError('Password must be 6+ chars');
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabaseClient.auth.signUp({ email, password });
     if (error) {
         showAuthError(error.message);
     } else {
@@ -105,8 +105,8 @@ async function signUpWithEmail() {
 }
 
 async function signOut() {
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
     hideAuthModal();
 }
 
@@ -126,7 +126,7 @@ function setSyncStatus(status) {
 }
 
 async function syncToCloud() {
-    if (!supabase || !currentUser) return;
+    if (!supabaseClient || !currentUser) return;
 
     setSyncStatus('syncing');
     try {
@@ -146,7 +146,7 @@ async function syncToCloud() {
             } catch (e) {}
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('user_data')
             .upsert({
                 user_id: currentUser.id,
@@ -163,11 +163,11 @@ async function syncToCloud() {
 }
 
 async function syncFromCloud() {
-    if (!supabase || !currentUser) return;
+    if (!supabaseClient || !currentUser) return;
 
     setSyncStatus('syncing');
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('user_data')
             .select('data')
             .eq('user_id', currentUser.id)
