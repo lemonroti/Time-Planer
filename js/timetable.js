@@ -1,244 +1,6 @@
-// Supabase Setup
-const SUPABASE_URL = 'https://qwzejtfuvgrnzobvvpne.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_EWnDMnM-lgpBVMzB8dk0Aw_goA23tRu';
-let supabaseClient = null;
-let currentUser = null;
-
-// Initialize Supabase
-function initSupabase() {
-    if (window.supabase) {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            currentUser = session?.user || null;
-            updateAuthUI();
-            if (currentUser) {
-                syncFromCloud();
-            }
-        });
-        // Check current session
-        supabaseClient.auth.getSession().then(({ data: { session } }) => {
-            currentUser = session?.user || null;
-            updateAuthUI();
-            if (currentUser) {
-                syncFromCloud();
-            }
-        });
-    }
-}
-
-// Menu functions
-function toggleMenu() {
-    const menu = document.getElementById('slideMenu');
-    const overlay = document.getElementById('slideMenuOverlay');
-    const toggle = document.getElementById('menuToggle');
-
-    menu.classList.toggle('visible');
-    overlay.classList.toggle('visible');
-    toggle.classList.toggle('active');
-}
-
-// Auth UI functions
-function toggleAuthModal() {
-    const modal = document.getElementById('authModal');
-    const overlay = document.getElementById('authOverlay');
-    modal.classList.toggle('visible');
-    overlay.classList.toggle('visible');
-}
-
-function hideAuthModal() {
-    document.getElementById('authModal').classList.remove('visible');
-    document.getElementById('authOverlay').classList.remove('visible');
-}
-
-function updateAuthUI() {
-    const loggedOut = document.getElementById('authLoggedOut');
-    const loggedIn = document.getElementById('authLoggedIn');
-    const authUser = document.getElementById('authUser');
-    const syncDot = document.getElementById('syncDot');
-    const syncIndicator = document.getElementById('syncIndicator');
-    const syncText = document.getElementById('syncText');
-    const menuAuthText = document.getElementById('menuAuthText');
-    const menuSignOut = document.getElementById('menuSignOut');
-
-    if (currentUser) {
-        loggedOut.style.display = 'none';
-        loggedIn.style.display = 'block';
-        authUser.textContent = currentUser.email;
-        syncDot.className = 'sync-dot synced';
-        syncIndicator.className = 'sync-indicator synced';
-        syncText.textContent = currentUser.email;
-        menuAuthText.textContent = 'Sync Now';
-        menuSignOut.style.display = 'flex';
-    } else {
-        loggedOut.style.display = 'block';
-        loggedIn.style.display = 'none';
-        syncDot.className = 'sync-dot';
-        syncIndicator.className = 'sync-indicator';
-        syncText.textContent = 'Not signed in';
-        menuAuthText.textContent = 'Sign in to sync';
-        menuSignOut.style.display = 'none';
-    }
-}
-
-function handleMenuAuth() {
-    if (currentUser) {
-        syncNow();
-        toggleMenu();
-    } else {
-        toggleMenu();
-        toggleAuthModal();
-    }
-}
-
-function showAuthError(msg) {
-    let errEl = document.querySelector('.auth-error');
-    if (!errEl) {
-        errEl = document.createElement('p');
-        errEl.className = 'auth-error';
-        document.getElementById('authBody').appendChild(errEl);
-    }
-    errEl.textContent = msg;
-    setTimeout(() => errEl.remove(), 3000);
-}
-
-async function signInWithEmail() {
-    if (!supabaseClient) return showAuthError('Supabase not loaded');
-    const email = document.getElementById('authEmail').value.trim();
-    const password = document.getElementById('authPassword').value;
-    if (!email || !password) return showAuthError('Enter email and password');
-
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-        showAuthError(error.message);
-    } else {
-        hideAuthModal();
-    }
-}
-
-async function signUpWithEmail() {
-    if (!supabaseClient) return showAuthError('Supabase not loaded');
-    const email = document.getElementById('authEmail').value.trim();
-    const password = document.getElementById('authPassword').value;
-    if (!email || !password) return showAuthError('Enter email and password');
-    if (password.length < 6) return showAuthError('Password must be 6+ chars');
-
-    const { error } = await supabaseClient.auth.signUp({ email, password });
-    if (error) {
-        showAuthError(error.message);
-    } else {
-        showAuthError('Check your email to confirm!');
-    }
-}
-
-async function signOut() {
-    if (!supabaseClient) return;
-    await supabaseClient.auth.signOut();
-    hideAuthModal();
-}
-
-// Sync functions
-function setSyncStatus(status) {
-    const syncDot = document.getElementById('syncDot');
-    const syncIndicator = document.getElementById('syncIndicator');
-
-    if (status === 'syncing') {
-        syncDot.className = 'sync-dot syncing';
-        syncIndicator.className = 'sync-indicator syncing';
-    } else if (status === 'synced') {
-        syncDot.className = 'sync-dot synced';
-        syncIndicator.className = 'sync-indicator synced';
-    } else if (status === 'error') {
-        syncDot.className = 'sync-dot error';
-        syncIndicator.className = 'sync-indicator error';
-    }
-}
-
-async function syncToCloud() {
-    if (!supabaseClient || !currentUser) return;
-
-    setSyncStatus('syncing');
-    try {
-        const allData = {
-            templates: templates,
-            current: currentTemplate,
-            schedules: {}
-        };
-
-        for (const name of templates) {
-            const key = getTemplateKey(name);
-            try {
-                const tasks = JSON.parse(localStorage.getItem(key));
-                if (Array.isArray(tasks)) {
-                    allData.schedules[name] = tasks;
-                }
-            } catch (e) {}
-        }
-
-        const { error } = await supabaseClient
-            .from('user_data')
-            .upsert({
-                user_id: currentUser.id,
-                data: allData,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id' });
-
-        if (error) throw error;
-        setSyncStatus('synced');
-    } catch (e) {
-        console.error('Sync to cloud failed:', e);
-        setSyncStatus('error');
-    }
-}
-
-async function syncFromCloud() {
-    if (!supabaseClient || !currentUser) return;
-
-    setSyncStatus('syncing');
-    try {
-        const { data, error } = await supabaseClient
-            .from('user_data')
-            .select('data')
-            .eq('user_id', currentUser.id)
-            .single();
-
-        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows
-
-        if (data?.data) {
-            const cloudData = data.data;
-
-            // Merge: cloud wins for now (simple strategy)
-            if (cloudData.templates && cloudData.schedules) {
-                templates = cloudData.templates;
-                saveTemplates();
-
-                for (const [name, tasks] of Object.entries(cloudData.schedules)) {
-                    if (Array.isArray(tasks)) {
-                        localStorage.setItem(getTemplateKey(name), JSON.stringify(tasks));
-                    }
-                }
-
-                if (cloudData.current && templates.includes(cloudData.current)) {
-                    currentTemplate = cloudData.current;
-                    localStorage.setItem('timetable_current', currentTemplate);
-                    document.getElementById('templateName').textContent = currentTemplate;
-                }
-
-                renderTasks();
-            }
-        } else {
-            // No cloud data, push local to cloud
-            await syncToCloud();
-        }
-        setSyncStatus('synced');
-    } catch (e) {
-        console.error('Sync from cloud failed:', e);
-        setSyncStatus('error');
-    }
-}
-
-async function syncNow() {
-    await syncToCloud();
-}
+// ========================================
+// TIMETABLE - Schedule feature
+// ========================================
 
 // State
 let currentTemplate = '';
@@ -255,87 +17,15 @@ const colors = {
     slate: '#7c8594'
 };
 
-// Load templates list
-function loadTemplates() {
-    const data = localStorage.getItem('timetable_templates');
-    return data ? JSON.parse(data) : [];
-}
+// Menu functions
+function toggleMenu() {
+    const menu = document.getElementById('slideMenu');
+    const overlay = document.getElementById('slideMenuOverlay');
+    const toggle = document.getElementById('menuToggle');
 
-// Save templates list
-function saveTemplates() {
-    localStorage.setItem('timetable_templates', JSON.stringify(templates));
-    debouncedSync();
-}
-
-// Get storage key for template
-function getTemplateKey(name) {
-    return 'timetable_' + name.toLowerCase().replace(/\s+/g, '_');
-}
-
-// Load tasks for current template
-function loadData() {
-    if (!currentTemplate) return [];
-    const key = getTemplateKey(currentTemplate);
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : [];
-}
-
-// Save tasks for current template
-function saveData(data) {
-    if (!currentTemplate) return;
-    const key = getTemplateKey(currentTemplate);
-    localStorage.setItem(key, JSON.stringify(data));
-    // Sync to cloud (debounced)
-    debouncedSync();
-}
-
-// Debounce sync to avoid too many calls
-let syncTimeout = null;
-function debouncedSync() {
-    if (syncTimeout) clearTimeout(syncTimeout);
-    syncTimeout = setTimeout(() => {
-        syncToCloud();
-    }, 1000);
-}
-
-// Format time for display
-function formatTime(time) {
-    const [hours, minutes] = time.split(':');
-    const h = parseInt(hours);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const hour12 = h % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
-}
-
-// Calculate duration (handles midnight crossing)
-function calcDuration(startTime, endTime) {
-    const startMins = timeToMins(startTime);
-    const endMins = timeToMins(endTime);
-    const effectiveEnd = getEffectiveEnd(startMins, endMins);
-    return (effectiveEnd - startMins) / 60;
-}
-
-// Format duration
-function formatDuration(hours) {
-    if (hours <= 0) return '0h';
-    if (hours < 1) return `${Math.round(hours * 60)}m`;
-    if (hours === 1) return '1h';
-    if (Number.isInteger(hours)) return `${hours}h`;
-    const h = Math.floor(hours);
-    const m = Math.round((hours - h) * 60);
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
-}
-
-// Convert time to minutes
-function timeToMins(time) {
-    const [h, m] = time.split(':').map(Number);
-    return h * 60 + m;
-}
-
-// Get effective end time (handles midnight crossing)
-// If end < start, assume task crosses midnight and add 24 hours
-function getEffectiveEnd(startMins, endMins) {
-    return endMins <= startMins ? endMins + 1440 : endMins;
+    menu.classList.toggle('visible');
+    overlay.classList.toggle('visible');
+    toggle.classList.toggle('active');
 }
 
 // Calculate total allocated hours (handles midnight crossing)
@@ -615,24 +305,6 @@ function deleteTask(id) {
     renderTasks();
 }
 
-// Escape HTML for text content
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Escape string for JavaScript string literals (single-quoted)
-// Used in onclick handlers to prevent XSS
-function escapeJsString(str) {
-    return String(str)
-        .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'")
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, '\\n')
-        .replace(/\r/g, '\\r');
-}
-
 // Find parent task for a sub-task (handles midnight crossing)
 function findParentTask(task, allTasks) {
     const tStart = timeToMins(task.startTime);
@@ -729,8 +401,6 @@ function renderTasks() {
         const indent = level * 24;
 
         // Check for gap with previous parent task
-        // Note: If previous task crossed midnight, lastParentEndTime > 1440
-        // In that case, no gap is shown since we're in "next day" territory
         if (!isSub && lastParentEndTime !== null && lastParentEndTime <= 1440) {
             const gapMins = timeToMins(task.startTime) - lastParentEndTime;
             if (gapMins > 0) {
@@ -769,10 +439,10 @@ function renderTasks() {
             </div>
         `;
     }
-    // Show remaining free time until midnight after last parent task
-    // Don't show if task crossed midnight (lastParentEndTime > 1440)
+
+    // Show remaining free time
     if (lastParentEndTime !== null && lastParentEndTime < 1440) {
-        const remainingMins = 1440 - lastParentEndTime; // 1440 = 24 * 60 = midnight
+        const remainingMins = 1440 - lastParentEndTime;
         if (remainingMins > 0) {
             html += `
                 <div class="task-gap">
@@ -783,7 +453,6 @@ function renderTasks() {
             `;
         }
     } else if (lastParentEndTime !== null && lastParentEndTime > 1440) {
-        // Task crossed midnight - show how far into next day
         const nextDayMins = lastParentEndTime - 1440;
         html += `
             <div class="task-gap">
@@ -823,7 +492,7 @@ function getAllTasks() {
 
 function renderStats() {
     const container = document.getElementById('statsContainer');
-    const tasks = loadData(); // Only current template
+    const tasks = loadData();
 
     if (tasks.length === 0) {
         container.innerHTML = '<div class="stats-empty">No tasks to analyze</div>';
@@ -865,7 +534,8 @@ function exportData() {
     const allData = {
         templates: templates,
         current: currentTemplate,
-        schedules: {}
+        schedules: {},
+        todos: loadTodosFromStorage()
     };
 
     for (const name of templates) {
@@ -884,7 +554,7 @@ function exportData() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `timetable-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `vipro-backup-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -911,6 +581,14 @@ function importData(event) {
                     }
                 }
 
+                // Import todos if present
+                if (data.todos && Array.isArray(data.todos)) {
+                    saveTodosToStorage(data.todos);
+                    if (typeof renderTodos === 'function') {
+                        renderTodos();
+                    }
+                }
+
                 if (data.current && templates.includes(data.current)) {
                     switchTemplate(data.current);
                 } else if (templates.length > 0) {
@@ -925,11 +603,8 @@ function importData(event) {
     event.target.value = '';
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Supabase
-    initSupabase();
-
+// Initialize timetable
+function initTimetable() {
     // Load templates
     templates = loadTemplates();
 
@@ -957,4 +632,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     renderTasks();
-});
+}

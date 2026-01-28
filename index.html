@@ -68,67 +68,131 @@
             </div>
         </header>
 
-        <nav class="template-nav">
-            <div class="template-selector">
-                <button class="nav-btn" onclick="prevTemplate()">←</button>
-                <div class="template-info" onclick="showTemplateMenu()">
-                    <span class="template-name" id="templateName">My Schedule</span>
-                    <span class="template-hint">tap to switch</span>
-                </div>
-                <button class="nav-btn" onclick="nextTemplate()">→</button>
-            </div>
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="timetable" onclick="switchTab('timetable')">
+                <span class="tab-icon">📅</span>
+                <span class="tab-label">Timetable</span>
+            </button>
+            <button class="tab-btn" data-tab="todo" onclick="switchTab('todo')">
+                <span class="tab-icon">☑</span>
+                <span class="tab-label">Todo</span>
+            </button>
         </nav>
 
-        <div class="template-menu" id="templateMenu">
-            <div class="template-menu-header">
-                <span>My Schedules</span>
-                <button class="menu-close-btn" onclick="hideTemplateMenu()">×</button>
-            </div>
-            <div class="template-list" id="templateList"></div>
-            <div class="template-menu-footer">
-                <input type="text" id="newTemplateName" placeholder="New schedule name..." class="template-input">
-                <button class="add-template-btn" onclick="createTemplate()">+</button>
-            </div>
-        </div>
-        <div class="template-overlay" id="templateOverlay" onclick="hideTemplateMenu()"></div>
+        <!-- TIMETABLE TAB -->
+        <div id="timetable-tab" class="tab-content">
+            <nav class="template-nav">
+                <div class="template-selector">
+                    <button class="nav-btn" onclick="prevTemplate()">←</button>
+                    <div class="template-info" onclick="showTemplateMenu()">
+                        <span class="template-name" id="templateName">My Schedule</span>
+                        <span class="template-hint">tap to switch</span>
+                    </div>
+                    <button class="nav-btn" onclick="nextTemplate()">→</button>
+                </div>
+            </nav>
 
-        <main>
+            <div class="template-menu" id="templateMenu">
+                <div class="template-menu-header">
+                    <span>My Schedules</span>
+                    <button class="menu-close-btn" onclick="hideTemplateMenu()">×</button>
+                </div>
+                <div class="template-list" id="templateList"></div>
+                <div class="template-menu-footer">
+                    <input type="text" id="newTemplateName" placeholder="New schedule name..." class="template-input">
+                    <button class="add-template-btn" onclick="createTemplate()">+</button>
+                </div>
+            </div>
+            <div class="template-overlay" id="templateOverlay" onclick="hideTemplateMenu()"></div>
+
+            <main>
+                <section class="add-card">
+                    <div class="add-header">
+                        <span class="section-title">Add Task</span>
+                    </div>
+
+                    <div class="add-body">
+                        <div class="time-row">
+                            <div class="time-group">
+                                <input type="time" id="startTime" value="09:00">
+                            </div>
+                            <span class="time-divider">→</span>
+                            <div class="time-group">
+                                <input type="time" id="endTime" value="10:00">
+                            </div>
+                        </div>
+
+                        <input
+                            type="text"
+                            class="task-input"
+                            id="taskInput"
+                            placeholder="What's on your schedule?"
+                        >
+
+                        <div class="add-footer">
+                            <div class="color-options">
+                                <button class="color-btn active" data-color="coral" onclick="selectColor('coral')"></button>
+                                <button class="color-btn" data-color="sky" onclick="selectColor('sky')"></button>
+                                <button class="color-btn" data-color="mint" onclick="selectColor('mint')"></button>
+                                <button class="color-btn" data-color="sand" onclick="selectColor('sand')"></button>
+                                <button class="color-btn" data-color="slate" onclick="selectColor('slate')"></button>
+                            </div>
+                            <div class="add-footer-buttons">
+                                <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
+                                <button class="add-btn" id="addBtn" onclick="saveTask()">
+                                    <span id="btnText">Add</span>
+                                    <span class="add-icon" id="btnIcon">+</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tasks-section">
+                    <div class="tasks-header">
+                        <span class="section-title">Schedule</span>
+                        <span class="task-count" id="taskCount">0 tasks</span>
+                    </div>
+                    <div class="tasks-list" id="taskContainer"></div>
+                </section>
+
+                <section class="stats-section">
+                    <div class="stats-header" onclick="toggleStats()">
+                        <span class="section-title">Statistics</span>
+                        <span class="stats-toggle" id="statsToggle">▼</span>
+                    </div>
+                    <div class="stats-list" id="statsContainer"></div>
+                </section>
+            </main>
+        </div>
+
+        <!-- TODO TAB -->
+        <div id="todo-tab" class="tab-content hidden">
             <section class="add-card">
                 <div class="add-header">
-                    <span class="section-title">Add Task</span>
+                    <span class="section-title">Add Todo</span>
                 </div>
 
                 <div class="add-body">
-                    <div class="time-row">
-                        <div class="time-group">
-                            <input type="time" id="startTime" value="09:00">
-                        </div>
-                        <span class="time-divider">→</span>
-                        <div class="time-group">
-                            <input type="time" id="endTime" value="10:00">
-                        </div>
-                    </div>
-
                     <input
                         type="text"
                         class="task-input"
-                        id="taskInput"
-                        placeholder="What's on your schedule?"
+                        id="todoInput"
+                        placeholder="What needs to be done?"
                     >
 
                     <div class="add-footer">
-                        <div class="color-options">
-                            <button class="color-btn active" data-color="coral" onclick="selectColor('coral')"></button>
-                            <button class="color-btn" data-color="sky" onclick="selectColor('sky')"></button>
-                            <button class="color-btn" data-color="mint" onclick="selectColor('mint')"></button>
-                            <button class="color-btn" data-color="sand" onclick="selectColor('sand')"></button>
-                            <button class="color-btn" data-color="slate" onclick="selectColor('slate')"></button>
+                        <div class="priority-options">
+                            <button class="priority-btn" data-priority="high" onclick="selectPriority('high')">High</button>
+                            <button class="priority-btn active" data-priority="medium" onclick="selectPriority('medium')">Med</button>
+                            <button class="priority-btn" data-priority="low" onclick="selectPriority('low')">Low</button>
                         </div>
                         <div class="add-footer-buttons">
-                            <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
-                            <button class="add-btn" id="addBtn" onclick="saveTask()">
-                                <span id="btnText">Add</span>
-                                <span class="add-icon" id="btnIcon">+</span>
+                            <button class="cancel-btn todo-cancel-btn" onclick="cancelTodoEdit()">Cancel</button>
+                            <button class="add-btn" id="todoAddBtn" onclick="handleTodoSubmit()">
+                                <span>Add</span>
+                                <span class="add-icon">+</span>
                             </button>
                         </div>
                     </div>
@@ -137,20 +201,12 @@
 
             <section class="tasks-section">
                 <div class="tasks-header">
-                    <span class="section-title">Schedule</span>
-                    <span class="task-count" id="taskCount">0 tasks</span>
+                    <span class="section-title">Todos</span>
+                    <span class="task-count" id="todoProgress">0 todos</span>
                 </div>
-                <div class="tasks-list" id="taskContainer"></div>
+                <div class="tasks-list" id="todoContainer"></div>
             </section>
-
-            <section class="stats-section">
-                <div class="stats-header" onclick="toggleStats()">
-                    <span class="section-title">Statistics</span>
-                    <span class="stats-toggle" id="statsToggle">▼</span>
-                </div>
-                <div class="stats-list" id="statsContainer"></div>
-            </section>
-        </main>
+        </div>
     </div>
 
     <!-- Auth Modal -->
@@ -178,6 +234,11 @@
     </div>
     <div class="auth-overlay" id="authOverlay" onclick="hideAuthModal()"></div>
 
-    <script src="app.js"></script>
+    <!-- Scripts (load order matters) -->
+    <script src="js/utils.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/timetable.js"></script>
+    <script src="js/todo.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
