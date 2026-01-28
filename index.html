@@ -18,14 +18,51 @@
                 <span class="logo-text">Timetable</span>
             </div>
             <div class="header-actions">
-                <button class="icon-btn" onclick="exportData()" title="Export">↓</button>
-                <button class="icon-btn" onclick="document.getElementById('importFile').click()" title="Import">↑</button>
                 <input type="file" id="importFile" accept=".json" onchange="importData(event)" hidden>
-                <div class="auth-section">
-                    <button class="icon-btn auth-btn" id="authBtn" onclick="toggleAuthModal()" title="Sign in to sync">⚡</button>
-                    <span class="sync-status" id="syncStatus"></span>
+                <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()" title="Menu">
+                    <span class="menu-bar"></span>
+                    <span class="menu-bar"></span>
+                    <span class="menu-bar"></span>
+                    <span class="sync-dot" id="syncDot"></span>
+                </button>
+            </div>
+
+            <!-- Slide-out Menu -->
+            <div class="slide-menu" id="slideMenu">
+                <div class="slide-menu-header">
+                    <span class="slide-menu-title">Menu</span>
+                    <button class="menu-close-btn" onclick="toggleMenu()">×</button>
+                </div>
+                <div class="slide-menu-content">
+                    <div class="menu-section">
+                        <span class="menu-section-label">Data</span>
+                        <button class="menu-item" onclick="exportData(); toggleMenu();">
+                            <span class="menu-item-icon">↓</span>
+                            <span class="menu-item-text">Export Backup</span>
+                        </button>
+                        <button class="menu-item" onclick="document.getElementById('importFile').click(); toggleMenu();">
+                            <span class="menu-item-icon">↑</span>
+                            <span class="menu-item-text">Import Backup</span>
+                        </button>
+                    </div>
+                    <div class="menu-section">
+                        <span class="menu-section-label">Account</span>
+                        <div class="menu-sync-status" id="menuSyncStatus">
+                            <span class="sync-indicator" id="syncIndicator"></span>
+                            <span class="sync-text" id="syncText">Not signed in</span>
+                        </div>
+                        <button class="menu-item" id="menuAuthBtn" onclick="handleMenuAuth()">
+                            <span class="menu-item-icon">⚡</span>
+                            <span class="menu-item-text" id="menuAuthText">Sign in to sync</span>
+                        </button>
+                        <button class="menu-item menu-signout" id="menuSignOut" onclick="signOut(); toggleMenu();" style="display: none;">
+                            <span class="menu-item-icon">→</span>
+                            <span class="menu-item-text">Sign Out</span>
+                        </button>
+                    </div>
                 </div>
             </div>
+            <div class="slide-menu-overlay" id="slideMenuOverlay" onclick="toggleMenu()"></div>
             <div class="hours-badge" id="hoursLeft">
                 <span class="hours-num">24</span>
                 <span class="hours-label">hrs free</span>

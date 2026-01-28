@@ -26,6 +26,17 @@ function initSupabase() {
     }
 }
 
+// Menu functions
+function toggleMenu() {
+    const menu = document.getElementById('slideMenu');
+    const overlay = document.getElementById('slideMenuOverlay');
+    const toggle = document.getElementById('menuToggle');
+
+    menu.classList.toggle('visible');
+    overlay.classList.toggle('visible');
+    toggle.classList.toggle('active');
+}
+
 // Auth UI functions
 function toggleAuthModal() {
     const modal = document.getElementById('authModal');
@@ -40,27 +51,42 @@ function hideAuthModal() {
 }
 
 function updateAuthUI() {
-    const authBtn = document.getElementById('authBtn');
     const loggedOut = document.getElementById('authLoggedOut');
     const loggedIn = document.getElementById('authLoggedIn');
     const authUser = document.getElementById('authUser');
-    const syncStatus = document.getElementById('syncStatus');
+    const syncDot = document.getElementById('syncDot');
+    const syncIndicator = document.getElementById('syncIndicator');
+    const syncText = document.getElementById('syncText');
+    const menuAuthText = document.getElementById('menuAuthText');
+    const menuSignOut = document.getElementById('menuSignOut');
 
     if (currentUser) {
-        authBtn.classList.add('logged-in');
-        authBtn.title = 'Synced: ' + currentUser.email;
         loggedOut.style.display = 'none';
         loggedIn.style.display = 'block';
         authUser.textContent = currentUser.email;
-        syncStatus.textContent = '●';
-        syncStatus.className = 'sync-status synced';
+        syncDot.className = 'sync-dot synced';
+        syncIndicator.className = 'sync-indicator synced';
+        syncText.textContent = currentUser.email;
+        menuAuthText.textContent = 'Sync Now';
+        menuSignOut.style.display = 'flex';
     } else {
-        authBtn.classList.remove('logged-in');
-        authBtn.title = 'Sign in to sync';
         loggedOut.style.display = 'block';
         loggedIn.style.display = 'none';
-        syncStatus.textContent = '';
-        syncStatus.className = 'sync-status';
+        syncDot.className = 'sync-dot';
+        syncIndicator.className = 'sync-indicator';
+        syncText.textContent = 'Not signed in';
+        menuAuthText.textContent = 'Sign in to sync';
+        menuSignOut.style.display = 'none';
+    }
+}
+
+function handleMenuAuth() {
+    if (currentUser) {
+        syncNow();
+        toggleMenu();
+    } else {
+        toggleMenu();
+        toggleAuthModal();
     }
 }
 
@@ -112,16 +138,18 @@ async function signOut() {
 
 // Sync functions
 function setSyncStatus(status) {
-    const el = document.getElementById('syncStatus');
+    const syncDot = document.getElementById('syncDot');
+    const syncIndicator = document.getElementById('syncIndicator');
+
     if (status === 'syncing') {
-        el.textContent = '↻';
-        el.className = 'sync-status syncing';
+        syncDot.className = 'sync-dot syncing';
+        syncIndicator.className = 'sync-indicator syncing';
     } else if (status === 'synced') {
-        el.textContent = '●';
-        el.className = 'sync-status synced';
+        syncDot.className = 'sync-dot synced';
+        syncIndicator.className = 'sync-indicator synced';
     } else if (status === 'error') {
-        el.textContent = '!';
-        el.className = 'sync-status error';
+        syncDot.className = 'sync-dot error';
+        syncIndicator.className = 'sync-indicator error';
     }
 }
 
