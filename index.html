@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timetable</title>
+    <title>Vipro Time</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -13,11 +13,7 @@
 <body>
     <div class="app">
         <header>
-            <div class="logo">
-                <span class="logo-icon">○</span>
-                <span class="logo-text">Timetable</span>
-            </div>
-            <div class="header-actions">
+            <div class="header-left">
                 <input type="file" id="importFile" accept=".json" onchange="importData(event)" hidden>
                 <button class="menu-toggle" id="menuToggle" onclick="toggleMenu()" title="Menu">
                     <span class="menu-bar"></span>
@@ -25,6 +21,9 @@
                     <span class="menu-bar"></span>
                     <span class="sync-dot" id="syncDot"></span>
                 </button>
+            </div>
+            <div class="logo">
+                <span class="logo-text">Vipro Time</span>
             </div>
 
             <!-- Slide-out Menu -->
